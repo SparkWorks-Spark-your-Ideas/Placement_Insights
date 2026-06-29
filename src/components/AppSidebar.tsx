@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Building2, GraduationCap, LayoutGrid, LogOut, User, ArrowLeftRight, BarChart3 } from "lucide-react";
+import { Building2, GraduationCap, LayoutGrid, LogOut, User, ArrowLeftRight, BarChart3, FileCheck, CalendarDays } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
@@ -11,6 +11,7 @@ const items = [
   { title: "Company Intelligence", url: "/company/intelligence", icon: Building2 },
   { title: "Skill Intelligence", url: "/company/skills", icon: GraduationCap },
   { title: "Compare Companies", url: "/company/compare", icon: ArrowLeftRight },
+  { title: "Resume Scanner", url: "/company/scan", icon: FileCheck },
 ];
 
 export function AppSidebar() {
@@ -41,6 +42,14 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link to="/hiring-drives" className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                <span>Active Drives</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link to="/analytics" className="flex items-center gap-2">

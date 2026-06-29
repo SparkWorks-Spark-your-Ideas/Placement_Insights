@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   normalizeCompanyProfile,
   normalizeCompanySummary,
@@ -322,6 +322,152 @@ export function useBatchSkills() {
           requiredAvg: requiredAvg || 5.0,
         };
       });
+    },
+  });
+}
+
+export interface HiringDrive {
+  id: string;
+  company_id: number;
+  title: string;
+  eligibility: string;
+  ctc: string;
+  deadline: string;
+  description: string;
+  created_at: string;
+  company?: CompanySummary;
+}
+
+export function useHiringDrives() {
+  return useQuery({
+    queryKey: ["hiring-drives"],
+    queryFn: async (): Promise<HiringDrive[]> => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from("hiring_drives")
+        .select("*, company_json(short_json)")
+        .order("deadline", { ascending: true });
+
+      if (error) throw error;
+
+      return (data ?? []).map((row: any) => {
+        const short = row.company_json
+          ? { ...row.company_json.short_json as Record<string, unknown>, company_id: row.company_id }
+          : null;
+        return {
+          id: row.id,
+          company_id: row.company_id,
+          title: row.title,
+          eligibility: row.eligibility,
+          ctc: row.ctc,
+          deadline: row.deadline,
+          description: row.description,
+          created_at: row.created_at,
+          company: short ? normalizeCompanySummary(short) : undefined,
+        };
+      });
+    },
+  });
+}
+
+export function useDriveRegistrations(driveId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["drive-registrations", driveId],
+    enabled: !!driveId,
+    queryFn: async () => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from("drive_registrations")
+        .select("*, profiles(full_name, email)")
+        .eq("drive_id", driveId as string);
+
+      if (error) throw error;
+      return (data ?? []).map((row: any) => ({
+        id: row.id,
+        registered_at: row.registered_at,
+        student_id: row.student_id,
+        full_name: row.profiles?.full_name ?? "Unknown",
+        email: row.profiles?.email ?? "Unknown",
+      }));
+    },
+  });
+}
+
+export function useStudentRegistrations(studentId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["student-registrations", studentId],
+    enabled: !!studentId,
+    queryFn: async (): Promise<string[]> => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from("drive_registrations")
+        .select("drive_id")
+        .eq("student_id", studentId as string);
+
+      if (error) throw error;
+      return (data ?? []).map((row: any) => String(row.drive_id));
+    },
+  });
+}
+
+export function useRegisterForDrive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ driveId, studentId }: { driveId: string; studentId: string }) => {
+      const supabase = requireSupabaseClient();
+      const { error } = await supabase
+        .from("drive_registrations")
+        .insert({ drive_id: driveId, student_id: studentId });
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["student-registrations", variables.studentId] });
+      queryClient.invalidateQueries({ queryKey: ["drive-registrations", variables.driveId] });
+    },
+  });
+}
+
+export function useUnregisterFromDrive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ driveId, studentId }: { driveId: string; studentId: string }) => {
+      const supabase = requireSupabaseClient();
+      const { error } = await supabase
+        .from("drive_registrations")
+        .delete()
+        .eq("drive_id", driveId)
+        .eq("student_id", studentId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["student-registrations", variables.studentId] });
+      queryClient.invalidateQueries({ queryKey: ["drive-registrations", variables.driveId] });
+    },
+  });
+}
+
+export function useCreateHiringDrive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (drive: Omit<HiringDrive, "id" | "created_at">) => {
+      const supabase = requireSupabaseClient();
+      const { error } = await supabase
+        .from("hiring_drives")
+        .insert({
+          company_id: drive.company_id,
+          title: drive.title,
+          eligibility: drive.eligibility,
+          ctc: drive.ctc,
+          deadline: drive.deadline,
+          description: drive.description,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hiring-drives"] });
     },
   });
 }

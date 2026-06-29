@@ -11,11 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as HiringDrivesRouteImport } from './routes/hiring-drives'
 import { Route as CompanyRouteImport } from './routes/company'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompanyIndexRouteImport } from './routes/company.index'
 import { Route as CompanySkillsRouteImport } from './routes/company.skills'
+import { Route as CompanyScanRouteImport } from './routes/company.scan'
 import { Route as CompanyIntelligenceRouteImport } from './routes/company.intelligence'
 import { Route as CompanyCompareRouteImport } from './routes/company.compare'
 
@@ -27,6 +29,11 @@ const SignupRoute = SignupRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HiringDrivesRoute = HiringDrivesRouteImport.update({
+  id: '/hiring-drives',
+  path: '/hiring-drives',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompanyRoute = CompanyRouteImport.update({
@@ -54,6 +61,11 @@ const CompanySkillsRoute = CompanySkillsRouteImport.update({
   path: '/skills',
   getParentRoute: () => CompanyRoute,
 } as any)
+const CompanyScanRoute = CompanyScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => CompanyRoute,
+} as any)
 const CompanyIntelligenceRoute = CompanyIntelligenceRouteImport.update({
   id: '/intelligence',
   path: '/intelligence',
@@ -69,20 +81,24 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/company': typeof CompanyRouteWithChildren
+  '/hiring-drives': typeof HiringDrivesRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/company/compare': typeof CompanyCompareRoute
   '/company/intelligence': typeof CompanyIntelligenceRoute
+  '/company/scan': typeof CompanyScanRoute
   '/company/skills': typeof CompanySkillsRoute
   '/company/': typeof CompanyIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/hiring-drives': typeof HiringDrivesRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/company/compare': typeof CompanyCompareRoute
   '/company/intelligence': typeof CompanyIntelligenceRoute
+  '/company/scan': typeof CompanyScanRoute
   '/company/skills': typeof CompanySkillsRoute
   '/company': typeof CompanyIndexRoute
 }
@@ -91,10 +107,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/company': typeof CompanyRouteWithChildren
+  '/hiring-drives': typeof HiringDrivesRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/company/compare': typeof CompanyCompareRoute
   '/company/intelligence': typeof CompanyIntelligenceRoute
+  '/company/scan': typeof CompanyScanRoute
   '/company/skills': typeof CompanySkillsRoute
   '/company/': typeof CompanyIndexRoute
 }
@@ -104,20 +122,24 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/company'
+    | '/hiring-drives'
     | '/login'
     | '/signup'
     | '/company/compare'
     | '/company/intelligence'
+    | '/company/scan'
     | '/company/skills'
     | '/company/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/analytics'
+    | '/hiring-drives'
     | '/login'
     | '/signup'
     | '/company/compare'
     | '/company/intelligence'
+    | '/company/scan'
     | '/company/skills'
     | '/company'
   id:
@@ -125,10 +147,12 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/company'
+    | '/hiring-drives'
     | '/login'
     | '/signup'
     | '/company/compare'
     | '/company/intelligence'
+    | '/company/scan'
     | '/company/skills'
     | '/company/'
   fileRoutesById: FileRoutesById
@@ -137,6 +161,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   CompanyRoute: typeof CompanyRouteWithChildren
+  HiringDrivesRoute: typeof HiringDrivesRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
 }
@@ -155,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hiring-drives': {
+      id: '/hiring-drives'
+      path: '/hiring-drives'
+      fullPath: '/hiring-drives'
+      preLoaderRoute: typeof HiringDrivesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/company': {
@@ -192,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanySkillsRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/company/scan': {
+      id: '/company/scan'
+      path: '/scan'
+      fullPath: '/company/scan'
+      preLoaderRoute: typeof CompanyScanRouteImport
+      parentRoute: typeof CompanyRoute
+    }
     '/company/intelligence': {
       id: '/company/intelligence'
       path: '/intelligence'
@@ -212,6 +251,7 @@ declare module '@tanstack/react-router' {
 interface CompanyRouteChildren {
   CompanyCompareRoute: typeof CompanyCompareRoute
   CompanyIntelligenceRoute: typeof CompanyIntelligenceRoute
+  CompanyScanRoute: typeof CompanyScanRoute
   CompanySkillsRoute: typeof CompanySkillsRoute
   CompanyIndexRoute: typeof CompanyIndexRoute
 }
@@ -219,6 +259,7 @@ interface CompanyRouteChildren {
 const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyCompareRoute: CompanyCompareRoute,
   CompanyIntelligenceRoute: CompanyIntelligenceRoute,
+  CompanyScanRoute: CompanyScanRoute,
   CompanySkillsRoute: CompanySkillsRoute,
   CompanyIndexRoute: CompanyIndexRoute,
 }
@@ -230,6 +271,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   CompanyRoute: CompanyRouteWithChildren,
+  HiringDrivesRoute: HiringDrivesRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
 }
