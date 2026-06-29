@@ -4,8 +4,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area
 } from "recharts";
-import { BarChart3, GraduationCap, LayoutGrid, Users, Award, TrendingUp } from "lucide-react";
+import { BarChart3, GraduationCap, LayoutGrid, Users, Award, TrendingUp, ShieldCheck } from "lucide-react";
 import { useCompany } from "@/context/CompanyContext";
+import { useBatchStats, useBatchSkills } from "@/lib/companyApi";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/analytics")({
 
 const COLORS = ["#7c3aed", "#2563eb", "#16a34a", "#d97706", "#ef4444"];
 
-// Mock student aggregate data for placement cell insights
+// Fallback student aggregate data if DB is empty/unconfigured
 const MOCK_STUDENT_SKILLS = [
   { name: "DSA", studentAvg: 6.2, requiredAvg: 7.5 },
   { name: "OOP", studentAvg: 5.8, requiredAvg: 6.5 },
@@ -26,17 +27,12 @@ const MOCK_STUDENT_SKILLS = [
   { name: "Generative AI", studentAvg: 3.5, requiredAvg: 4.5 },
 ];
 
-const MOCK_PLACEMENT_STATS = {
-  totalStudents: 420,
-  placedCount: 285,
-  pendingCount: 135,
-  avgSalary: "9.2 LPA",
-  highestSalary: "32 LPA",
-};
-
 function BatchAnalytics() {
   const { companies } = useCompany();
   const [mounted, setMounted] = useState(false);
+
+  const statsQuery = useBatchStats();
+  const skillsQuery = useBatchSkills();
 
   useEffect(() => {
     setMounted(true);
@@ -52,13 +48,29 @@ function BatchAnalytics() {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   })();
 
-  if (!mounted) {
+  if (!mounted || statsQuery.isLoading || skillsQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#2563eb] border-t-transparent" />
       </div>
     );
   }
+
+  // Fallback structures if database tables are empty
+  const hasDbData = (statsQuery.data?.totalStudents ?? 0) > 0;
+  const stats = hasDbData
+    ? statsQuery.data!
+    : {
+        totalStudents: 420,
+        placedCount: 285,
+        pendingCount: 135,
+        highestSalary: "32 LPA",
+        avgSalary: "9.2 LPA",
+      };
+
+  const skillsData = skillsQuery.data && skillsQuery.data.length > 0
+    ? skillsQuery.data
+    : MOCK_STUDENT_SKILLS;
 
   return (
     <SidebarProvider>
@@ -92,7 +104,7 @@ function BatchAnalytics() {
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground block font-medium">Batch Registered</span>
-                  <span className="text-xl font-bold text-foreground">{MOCK_PLACEMENT_STATS.totalStudents} Students</span>
+                  <span className="text-xl font-bold text-foreground">{stats.totalStudents} Students</span>
                 </div>
               </div>
 
@@ -101,9 +113,9 @@ function BatchAnalytics() {
                   <ShieldCheck className="h-5 w-5" />
                 </div>
                 <div>
-                  <span className="text-xs text-muted-foreground block font-medium font-medium">Placed Status</span>
+                  <span className="text-xs text-muted-foreground block font-medium">Placed Status</span>
                   <span className="text-xl font-bold text-foreground">
-                    {MOCK_PLACEMENT_STATS.placedCount} <span className="text-xs font-normal text-muted-foreground">({Math.round((MOCK_PLACEMENT_STATS.placedCount / MOCK_PLACEMENT_STATS.totalStudents) * 100)}%)</span>
+                    {stats.placedCount} <span className="text-xs font-normal text-muted-foreground">({stats.totalStudents > 0 ? Math.round((stats.placedCount / stats.totalStudents) * 100) : 0}%)</span>
                   </span>
                 </div>
               </div>
@@ -114,7 +126,7 @@ function BatchAnalytics() {
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground block font-medium">Highest package</span>
-                  <span className="text-xl font-bold text-foreground">{MOCK_PLACEMENT_STATS.highestSalary}</span>
+                  <span className="text-xl font-bold text-foreground">{stats.highestSalary}</span>
                 </div>
               </div>
 
@@ -124,7 +136,7 @@ function BatchAnalytics() {
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground block font-medium font-medium">Average Package</span>
-                  <span className="text-xl font-bold text-foreground">{MOCK_PLACEMENT_STATS.avgSalary}</span>
+                  <span className="text-xl font-bold text-foreground">{stats.avgSalary}</span>
                 </div>
               </div>
             </div>
@@ -138,7 +150,7 @@ function BatchAnalytics() {
                 </h3>
                 <div className="h-72 w-full mt-auto">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={MOCK_STUDENT_SKILLS} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <BarChart data={skillsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
                       <XAxis dataKey="name" fontSize={11} tickLine={false} />
                       <YAxis domain={[0, 10]} fontSize={11} tickLine={false} />

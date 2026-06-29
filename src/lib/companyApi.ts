@@ -228,3 +228,100 @@ export function useCompanySkills(companyId: number | null | undefined) {
     },
   });
 }
+
+export function useBatchStats() {
+  return useQuery({
+    queryKey: ["batch-stats"],
+    queryFn: async () => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("placement_status, package_lpa");
+
+      if (error) throw error;
+
+      const totalStudents = data?.length ?? 0;
+      const placedCount = data?.filter((d: any) => d.placement_status === "placed").length ?? 0;
+      const pendingCount = totalStudents - placedCount;
+
+      const packages = data
+        ?.filter((d: any) => d.placement_status === "placed" && Number(d.package_lpa) > 0)
+        .map((d: any) => Number(d.package_lpa)) ?? [];
+
+      const highestSalary = packages.length > 0 ? Math.max(...packages) : 0;
+      const avgSalary = packages.length > 0
+        ? Number((packages.reduce((a, b) => a + b, 0) / packages.length).toFixed(1))
+        : 0;
+
+      return {
+        totalStudents,
+        placedCount,
+        pendingCount,
+        highestSalary: highestSalary > 0 ? `${highestSalary} LPA` : "0 LPA",
+        avgSalary: avgSalary > 0 ? `${avgSalary} LPA` : "0 LPA",
+      };
+    },
+  });
+}
+
+export function useBatchSkills() {
+  return useQuery({
+    queryKey: ["batch-skills"],
+    queryFn: async () => {
+      const supabase = requireSupabaseClient();
+
+      const [studentsRes, companyRes, skillMasterRes] = await Promise.all([
+        supabase.from("student_skills").select("skill_set_name, current_level"),
+        supabase.from("company_skill_levels").select("skill_set_id, required_level"),
+        supabase.from("skill_set_master").select("skill_set_id, skill_set_name, short_name"),
+      ]);
+
+      if (studentsRes.error) throw studentsRes.error;
+      if (companyRes.error) throw companyRes.error;
+      if (skillMasterRes.error) throw skillMasterRes.error;
+
+      const studentGroups: Record<string, number[]> = {};
+      for (const row of studentsRes.data ?? []) {
+        const name = String(row.skill_set_name);
+        studentGroups[name] = studentGroups[name] ?? [];
+        studentGroups[name].push(Number(row.current_level));
+      }
+
+      const masterMap = new Map<number, string>();
+      for (const row of skillMasterRes.data ?? []) {
+        masterMap.set(row.skill_set_id, row.skill_set_name ?? row.short_name);
+      }
+
+      const companyGroups: Record<string, number[]> = {};
+      for (const row of companyRes.data ?? []) {
+        const name = masterMap.get(row.skill_set_id) ?? `Skill ${row.skill_set_id}`;
+        companyGroups[name] = companyGroups[name] ?? [];
+        companyGroups[name].push(Number(row.required_level));
+      }
+
+      const skillNames = Array.from(new Set([
+        ...Object.keys(studentGroups),
+        ...Object.keys(companyGroups),
+      ]));
+
+      return skillNames.map((name) => {
+        const studentVals = studentGroups[name] ?? [];
+        const companyVals = companyGroups[name] ?? [];
+
+        const studentAvg = studentVals.length > 0
+          ? Number((studentVals.reduce((a, b) => a + b, 0) / studentVals.length).toFixed(1))
+          : 0;
+
+        const requiredAvg = companyVals.length > 0
+          ? Number((companyVals.reduce((a, b) => a + b, 0) / companyVals.length).toFixed(1))
+          : 0;
+
+        return {
+          name,
+          studentAvg,
+          requiredAvg: requiredAvg || 5.0,
+        };
+      });
+    },
+  });
+}
