@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, LogOut, User } from "lucide-react";
 import { useCompany } from "@/context/CompanyContext";
 import { CompanyCard } from "@/components/CompanyCard";
+import { useAuth } from "@/context/AuthContext";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,6 +26,7 @@ const FILTERS = [
 
 function Index() {
   const { companies, isReady, companiesLoading, companiesError, refetchCompanies } = useCompany();
+  const { profile, signOut } = useAuth();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [filter, setFilter] = useState("all");
@@ -58,9 +61,28 @@ function Index() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-          <span className="inline-flex items-center rounded-full bg-[#eff6ff] px-3 py-1 text-xs font-semibold tracking-wide text-[#2563eb]">
-            KITS · INTELLIGENCE PLATFORM
-          </span>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <span className="inline-flex items-center rounded-full bg-[#eff6ff] px-3 py-1 text-xs font-semibold tracking-wide text-[#2563eb]">
+              KITS · INTELLIGENCE PLATFORM
+            </span>
+            {profile && (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-1.5 pl-3 pr-2 shadow-sm text-xs">
+                <span className="font-medium text-foreground">
+                  {profile.full_name}
+                </span>
+                <span className="rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold px-2 py-0.5 uppercase">
+                  {profile.role}
+                </span>
+                <div className="h-4 w-px bg-border mx-1" />
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-1 font-semibold text-red-600 hover:text-red-500 transition-colors"
+                >
+                  <LogOut className="h-3.5 w-3.5" /> Sign Out
+                </button>
+              </div>
+            )}
+          </div>
           <h1 className="mt-4 font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Karunya Institute Of Technology and Sciences Companies Research &amp; Placement Analytics Portal
           </h1>

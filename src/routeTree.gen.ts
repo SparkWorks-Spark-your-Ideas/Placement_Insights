@@ -9,12 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as CompanyRouteImport } from './routes/company'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompanyIndexRouteImport } from './routes/company.index'
 import { Route as CompanySkillsRouteImport } from './routes/company.skills'
 import { Route as CompanyIntelligenceRouteImport } from './routes/company.intelligence'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompanyRoute = CompanyRouteImport.update({
   id: '/company',
   path: '/company',
@@ -44,12 +56,16 @@ const CompanyIntelligenceRoute = CompanyIntelligenceRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/company': typeof CompanyRouteWithChildren
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/company/intelligence': typeof CompanyIntelligenceRoute
   '/company/skills': typeof CompanySkillsRoute
   '/company/': typeof CompanyIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/company/intelligence': typeof CompanyIntelligenceRoute
   '/company/skills': typeof CompanySkillsRoute
   '/company': typeof CompanyIndexRoute
@@ -58,6 +74,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/company': typeof CompanyRouteWithChildren
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/company/intelligence': typeof CompanyIntelligenceRoute
   '/company/skills': typeof CompanySkillsRoute
   '/company/': typeof CompanyIndexRoute
@@ -67,15 +85,25 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/company'
+    | '/login'
+    | '/signup'
     | '/company/intelligence'
     | '/company/skills'
     | '/company/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/company/intelligence' | '/company/skills' | '/company'
+  to:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/company/intelligence'
+    | '/company/skills'
+    | '/company'
   id:
     | '__root__'
     | '/'
     | '/company'
+    | '/login'
+    | '/signup'
     | '/company/intelligence'
     | '/company/skills'
     | '/company/'
@@ -84,10 +112,26 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CompanyRoute: typeof CompanyRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/company': {
       id: '/company'
       path: '/company'
@@ -144,6 +188,8 @@ const CompanyRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CompanyRoute: CompanyRouteWithChildren,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
