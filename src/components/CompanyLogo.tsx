@@ -40,7 +40,13 @@ function buildCandidates(websiteUrl: string | undefined, logoDevKey: string | un
     candidates.push(`https://img.logo.dev/${domain}?token=${logoDevKey}&size=${size * 2}&format=png`);
   }
 
-  // DuckDuckGo favicon proxy – always returns an image, never a 404, CORS-safe
+  // 1. Clearbit Logo API (free, clean)
+  candidates.push(`https://logo.clearbit.com/${domain}`);
+
+  // 2. Google Favicon Service (reliable, fast)
+  candidates.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=${size * 2}`);
+
+  // 3. DuckDuckGo favicon proxy
   candidates.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
 
   return candidates;
@@ -52,7 +58,7 @@ export function CompanyLogo({ name, websiteUrl, size = 48, className = "" }: Pro
   const [idx, setIdx] = useState(0);
   const src = candidates[idx];
 
-  if (!src) {
+  if (!src || idx >= candidates.length) {
     return <LogoAvatar name={name} size={size} className={className} />;
   }
 

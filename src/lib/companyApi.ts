@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   normalizeCompanyProfile,
   normalizeCompanySummary,
@@ -225,6 +225,249 @@ export function useCompanySkills(companyId: number | null | undefined) {
         skills: normalizeDashboardSkills(normalizedSkills),
         skillTopics: Object.fromEntries(topicMap.entries()),
       };
+    },
+  });
+}
+
+export function useBatchStats() {
+  return useQuery({
+    queryKey: ["batch-stats"],
+    queryFn: async () => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("placement_status, package_lpa");
+
+      if (error) throw error;
+
+      const totalStudents = data?.length ?? 0;
+      const placedCount = data?.filter((d: any) => d.placement_status === "placed").length ?? 0;
+      const pendingCount = totalStudents - placedCount;
+
+      const packages = data
+        ?.filter((d: any) => d.placement_status === "placed" && Number(d.package_lpa) > 0)
+        .map((d: any) => Number(d.package_lpa)) ?? [];
+
+      const highestSalary = packages.length > 0 ? Math.max(...packages) : 0;
+      const avgSalary = packages.length > 0
+        ? Number((packages.reduce((a, b) => a + b, 0) / packages.length).toFixed(1))
+        : 0;
+
+      return {
+        totalStudents,
+        placedCount,
+        pendingCount,
+        highestSalary: highestSalary > 0 ? `${highestSalary} LPA` : "0 LPA",
+        avgSalary: avgSalary > 0 ? `${avgSalary} LPA` : "0 LPA",
+      };
+    },
+  });
+}
+
+export function useBatchSkills() {
+  return useQuery({
+    queryKey: ["batch-skills"],
+    queryFn: async () => {
+      const supabase = requireSupabaseClient();
+
+      const [studentsRes, companyRes, skillMasterRes] = await Promise.all([
+        supabase.from("student_skills").select("skill_set_name, current_level"),
+        supabase.from("company_skill_levels").select("skill_set_id, required_level"),
+        supabase.from("skill_set_master").select("skill_set_id, skill_set_name, short_name"),
+      ]);
+
+      if (studentsRes.error) throw studentsRes.error;
+      if (companyRes.error) throw companyRes.error;
+      if (skillMasterRes.error) throw skillMasterRes.error;
+
+      const studentGroups: Record<string, number[]> = {};
+      for (const row of studentsRes.data ?? []) {
+        const name = String(row.skill_set_name);
+        studentGroups[name] = studentGroups[name] ?? [];
+        studentGroups[name].push(Number(row.current_level));
+      }
+
+      const masterMap = new Map<number, string>();
+      for (const row of skillMasterRes.data ?? []) {
+        masterMap.set(row.skill_set_id, row.skill_set_name ?? row.short_name);
+      }
+
+      const companyGroups: Record<string, number[]> = {};
+      for (const row of companyRes.data ?? []) {
+        const name = masterMap.get(row.skill_set_id) ?? `Skill ${row.skill_set_id}`;
+        companyGroups[name] = companyGroups[name] ?? [];
+        companyGroups[name].push(Number(row.required_level));
+      }
+
+      const skillNames = Array.from(new Set([
+        ...Object.keys(studentGroups),
+        ...Object.keys(companyGroups),
+      ]));
+
+      return skillNames.map((name) => {
+        const studentVals = studentGroups[name] ?? [];
+        const companyVals = companyGroups[name] ?? [];
+
+        const studentAvg = studentVals.length > 0
+          ? Number((studentVals.reduce((a, b) => a + b, 0) / studentVals.length).toFixed(1))
+          : 0;
+
+        const requiredAvg = companyVals.length > 0
+          ? Number((companyVals.reduce((a, b) => a + b, 0) / companyVals.length).toFixed(1))
+          : 0;
+
+        return {
+          name,
+          studentAvg,
+          requiredAvg: requiredAvg || 5.0,
+        };
+      });
+    },
+  });
+}
+
+export interface HiringDrive {
+  id: string;
+  company_id: number;
+  title: string;
+  eligibility: string;
+  ctc: string;
+  deadline: string;
+  description: string;
+  created_at: string;
+  company?: CompanySummary;
+}
+
+export function useHiringDrives() {
+  return useQuery({
+    queryKey: ["hiring-drives"],
+    queryFn: async (): Promise<HiringDrive[]> => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from("hiring_drives")
+        .select("*, company_json(short_json)")
+        .order("deadline", { ascending: true });
+
+      if (error) throw error;
+
+      return (data ?? []).map((row: any) => {
+        const short = row.company_json
+          ? { ...row.company_json.short_json as Record<string, unknown>, company_id: row.company_id }
+          : null;
+        return {
+          id: row.id,
+          company_id: row.company_id,
+          title: row.title,
+          eligibility: row.eligibility,
+          ctc: row.ctc,
+          deadline: row.deadline,
+          description: row.description,
+          created_at: row.created_at,
+          company: short ? normalizeCompanySummary(short) : undefined,
+        };
+      });
+    },
+  });
+}
+
+export function useDriveRegistrations(driveId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["drive-registrations", driveId],
+    enabled: !!driveId,
+    queryFn: async () => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from("drive_registrations")
+        .select("*, profiles(full_name, email)")
+        .eq("drive_id", driveId as string);
+
+      if (error) throw error;
+      return (data ?? []).map((row: any) => ({
+        id: row.id,
+        registered_at: row.registered_at,
+        student_id: row.student_id,
+        full_name: row.profiles?.full_name ?? "Unknown",
+        email: row.profiles?.email ?? "Unknown",
+      }));
+    },
+  });
+}
+
+export function useStudentRegistrations(studentId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["student-registrations", studentId],
+    enabled: !!studentId,
+    queryFn: async (): Promise<string[]> => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from("drive_registrations")
+        .select("drive_id")
+        .eq("student_id", studentId as string);
+
+      if (error) throw error;
+      return (data ?? []).map((row: any) => String(row.drive_id));
+    },
+  });
+}
+
+export function useRegisterForDrive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ driveId, studentId }: { driveId: string; studentId: string }) => {
+      const supabase = requireSupabaseClient();
+      const { error } = await supabase
+        .from("drive_registrations")
+        .insert({ drive_id: driveId, student_id: studentId });
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["student-registrations", variables.studentId] });
+      queryClient.invalidateQueries({ queryKey: ["drive-registrations", variables.driveId] });
+    },
+  });
+}
+
+export function useUnregisterFromDrive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ driveId, studentId }: { driveId: string; studentId: string }) => {
+      const supabase = requireSupabaseClient();
+      const { error } = await supabase
+        .from("drive_registrations")
+        .delete()
+        .eq("drive_id", driveId)
+        .eq("student_id", studentId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["student-registrations", variables.studentId] });
+      queryClient.invalidateQueries({ queryKey: ["drive-registrations", variables.driveId] });
+    },
+  });
+}
+
+export function useCreateHiringDrive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (drive: Omit<HiringDrive, "id" | "created_at">) => {
+      const supabase = requireSupabaseClient();
+      const { error } = await supabase
+        .from("hiring_drives")
+        .insert({
+          company_id: drive.company_id,
+          title: drive.title,
+          eligibility: drive.eligibility,
+          ctc: drive.ctc,
+          deadline: drive.deadline,
+          description: drive.description,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hiring-drives"] });
     },
   });
 }

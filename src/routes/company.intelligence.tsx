@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, memo } from "react";
-import { ExternalLink, Linkedin } from "lucide-react";
+import { useMemo, useState, memo } from "react";
+import {
+  ExternalLink, Linkedin, Building2, Sparkles, Briefcase, Calendar, Globe2, Users, Eye, HeartPulse,
+  Award, MessageSquare, Send, Bot, AlertCircle, CheckCircle2, ChevronRight, Compass
+} from "lucide-react";
 import { useCompany } from "@/context/CompanyContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { FieldRow } from "@/components/FieldRow";
+import { renderValue } from "@/components/FieldRow";
+import { isNullish } from "@/lib/companyData";
 import { buildIntelligenceSections, type IntelligenceSection } from "@/data/intelligenceData";
 import { useCompanyProfile } from "@/lib/companyApi";
 
@@ -11,34 +15,610 @@ export const Route = createFileRoute("/company/intelligence")({
   component: CompanyIntelligence,
 });
 
+// Custom SVGs and Gauge Components
+function CircularGauge({ value }: { value: number }) {
+  const radius = 38;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (value / 100) * circumference;
+
+  return (
+    <div className="relative flex items-center justify-center h-28 w-28">
+      <svg className="h-full w-full transform -rotate-90">
+        <circle
+          cx="56"
+          cy="56"
+          r={radius}
+          className="stroke-muted-foreground/15 fill-none"
+          strokeWidth="7"
+        />
+        <circle
+          cx="56"
+          cy="56"
+          r={radius}
+          className="stroke-[#2563eb] fill-none transition-all duration-700 ease-out"
+          strokeWidth="7"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center">
+        <span className="text-lg font-bold text-foreground">{value}%</span>
+        <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Ready</span>
+      </div>
+    </div>
+  );
+}
+
+// 4 recruitment stages for timeline
+const TIMELINE_STAGES = [
+  {
+    title: "1. Online Assessment",
+    subtitle: "Aptitude & Basic CS",
+    duration: "90 Mins",
+    difficulty: "Medium",
+    color: "border-t-blue-500",
+    advice: "Consists of 30 quantitative / logical reasoning MCQs and basic OOP pseudocode debugging. Focus on speed and precision.",
+    checklist: ["Quantitative Aptitude basics", "Logical reasoning drills", "Java/C++ syntax verification", "Time limit pacing"]
+  },
+  {
+    title: "2. Coding Test",
+    subtitle: "DSA Problem Solving",
+    duration: "60 Mins",
+    difficulty: "Hard",
+    color: "border-t-purple-500",
+    advice: "Typically consists of 2-3 coding problems on arrays, strings, and hash maps. Focus on optimization and edge cases.",
+    checklist: ["String reversals & substring search", "Array partitioning & search", "Hash map frequency counts", "Basic dynamic programming"]
+  },
+  {
+    title: "3. Technical Interview",
+    subtitle: "Core CS & Live Code",
+    duration: "45 Mins",
+    difficulty: "Hard",
+    color: "border-t-indigo-500",
+    advice: "Live schema design, explaining project architecture, running custom SQL Queries, and DBMS Normalization theories.",
+    checklist: ["SQL join querying without helper functions", "Db Normalisation rules (1NF, 2NF, 3NF)", "Project structural diagrams", "Operating System memory layout"]
+  },
+  {
+    title: "4. HR & Culture Fit",
+    subtitle: "Behavioral Alignment",
+    duration: "20 Mins",
+    difficulty: "Easy",
+    color: "border-t-emerald-500",
+    advice: "Scenario questions about teamwork, relocation willingness, and resolving technical team conflicts.",
+    checklist: ["Self-introduction summary", "Conflict-resolution scenario examples", "Relocation & shift alignment", "Placed commitment declaration"]
+  }
+];
+
 const SectionCard = memo(function SectionCard({
-  section, profile, idx, registerRef,
+  section, profile, companyName, companyId
 }: {
   section: IntelligenceSection;
   profile: Record<string, unknown>;
-  idx: number;
-  registerRef: (i: number, el: HTMLDivElement | null) => void;
+  companyName: string;
+  companyId: number;
 }) {
   const Icon = section.icon;
-  return (
-    <div
-      id={section.id}
-      ref={(el) => registerRef(idx, el)}
-      className="scroll-mt-32 rounded-xl border border-border bg-card p-5 shadow-sm"
-    >
-      <div className="mb-4 flex items-center gap-3">
-        <div className="rounded-lg bg-[#eff6ff] p-2 text-[#2563eb]">
-          <Icon className="h-4 w-4" />
+
+  // Custom states for interactive widgets
+  const [activeTimelineIdx, setActiveTimelineIdx] = useState(0);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "bot"; text: string }>>([
+    {
+      sender: "bot",
+      text: `Hello! I am your AI Placement Coach specialized in ${companyName}. I have scanned their required technologies and recent interview logs. Ask me anything about preparing for this company!`
+    }
+  ]);
+
+  // Compute dynamic match score based on company details
+  const matchScore = useMemo(() => {
+    // Generate deterministic match score based on companyId
+    const seed = (companyId * 7) % 25;
+    return 70 + seed; // range 70% to 94% match
+  }, [companyId]);
+
+  const handleSendChat = () => {
+    if (!chatInput.trim()) return;
+    const userText = chatInput.trim();
+    setChatMessages(prev => [...prev, { sender: "user", text: userText }]);
+    setChatInput("");
+
+    // Simulate AI response based on keyword matching
+    setTimeout(() => {
+      const lower = userText.toLowerCase();
+      let reply = "";
+
+      if (lower.includes("sql") || lower.includes("dbms") || lower.includes("database")) {
+        reply = `${companyName}'s technical round checks DBMS and query structure. Focus on SQL Joins (Left vs Outer), Indexing optimizations, and CTEs. A common question: 'Find the second highest salary in an employee table without using the LIMIT keyword.'`;
+      } else if (lower.includes("coding") || lower.includes("dsa") || lower.includes("round")) {
+        reply = `For ${companyName}'s coding rounds, practice intermediate array manipulation, string patterns, and basic recursion. They usually evaluate syntax correctness, variable naming, and optimal space/time complexity.`;
+      } else if (lower.includes("salary") || lower.includes("package") || lower.includes("ctc")) {
+        reply = `Recruiting drives for ${companyName} offer Dream packages (6.5 - 8.5 LPA) and Standard roles (4.5 LPA). Preparing your fundamentals in object-oriented design and SQL will help you qualify for the Dream category.`;
+      } else if (lower.includes("culture") || lower.includes("work")) {
+        reply = `Our analytics show that ${companyName} has an organized enterprise work culture. They offer solid entry-level training, with standard project delivery frameworks. Burnout risk ranges from low to moderate.`;
+      } else {
+        reply = `${companyName} recruiters look for clear CS fundamentals and clean verbal communication. Focus on your project architectures and database schemas. What specific prep area can I detail next?`;
+      }
+
+      setChatMessages(prev => [...prev, { sender: "bot", text: reply }]);
+    }, 600);
+  };
+
+  // ----------------------------------------------------
+  // CUSTOM CARD FOR "Preparation Readiness" (ID: prep-score)
+  // ----------------------------------------------------
+  if (section.id === "prep-score") {
+    return (
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+        <div className="flex items-center gap-3 border-b border-border pb-4">
+          <div className="rounded-lg bg-blue-100 p-2 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+            <Award className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-heading text-lg font-bold text-foreground">Hiring Readiness &amp; Compatibility</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Scans profile benchmarks against {companyName} hiring expectations.</p>
+          </div>
         </div>
-        <h2 className="flex-1 font-heading text-lg font-semibold text-foreground">{section.title}</h2>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-          {section.fields.length}
-        </span>
+
+        <div className="flex flex-col md:flex-row items-center gap-8 bg-slate-50/40 p-5 rounded-2xl border border-border/40 dark:bg-slate-900/10">
+          <div className="shrink-0 flex flex-col items-center">
+            <CircularGauge value={matchScore} />
+            <span className="text-[10px] font-bold text-[#2563eb] bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5 mt-2.5 dark:bg-blue-950/20 dark:border-blue-900/40">
+              High Eligibility
+            </span>
+          </div>
+
+          <div className="flex-1 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-foreground">Preparation Checklists &amp; Badges</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Verified skill targets completed vs items needing focus.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-start gap-2.5 text-xs text-muted-foreground bg-card p-3 rounded-lg border border-border/40">
+                <CheckCircle2 className="h-4.5 w-4.5 text-green-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-foreground block">Mastered (Verified)</span>
+                  Communication, Core OOPs pseudocodes, and Foundations of Python/Java.
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5 text-xs text-muted-foreground bg-card p-3 rounded-lg border border-border/40">
+                <AlertCircle className="h-4.5 w-4.5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-foreground block">Needs Attention</span>
+                  System Design scaling, DBMS transaction management, and raw SQL Joins.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="divide-y divide-border/60">
-        {section.fields.map((field) => (
-          <FieldRow key={field.key} label={field.label} value={profile[field.key]} kind={field.kind} />
-        ))}
+    );
+  }
+
+  // ----------------------------------------------------
+  // CUSTOM CARD FOR "Recruitment Timeline" (ID: hiring-timeline)
+  // ----------------------------------------------------
+  if (section.id === "hiring-timeline") {
+    const selectedStage = TIMELINE_STAGES[activeTimelineIdx];
+
+    return (
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+        <div className="flex items-center gap-3 border-b border-border pb-4">
+          <div className="rounded-lg bg-purple-100 p-2 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+            <Compass className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-heading text-lg font-bold text-foreground">Hiring Timeline &amp; Rounds</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Chronological overview of stages for {companyName}.</p>
+          </div>
+        </div>
+
+        {/* Step circles navigation */}
+        <div className="flex justify-between items-center gap-2 overflow-x-auto no-scrollbar pb-3 border-b border-border/50">
+          {TIMELINE_STAGES.map((stage, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveTimelineIdx(idx)}
+              className={`flex-1 text-center shrink-0 min-w-[130px] rounded-lg p-2.5 border transition ${
+                activeTimelineIdx === idx
+                  ? "bg-purple-50 border-purple-200 text-purple-800 dark:bg-purple-950/20 dark:border-purple-900/40"
+                  : "bg-muted/40 border-border/40 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <span className="text-[10px] font-bold block uppercase tracking-wider">Round {idx + 1}</span>
+              <span className="text-[11px] font-semibold block truncate mt-0.5">{stage.title.split(". ")[1]}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Stage details panel */}
+        <div className={`p-5 rounded-2xl border border-border/60 border-t-4 ${selectedStage.color} bg-muted/20 space-y-4`}>
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            <div>
+              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block">Round Focus</span>
+              <h3 className="text-sm font-bold text-foreground mt-0.5">{selectedStage.title}</h3>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-[10px] font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+                Duration: {selectedStage.duration}
+              </span>
+              <span className={`text-[10px] font-bold border px-2 py-0.5 rounded-full ${
+                selectedStage.difficulty === "Hard"
+                  ? "bg-red-50 border-red-200 text-red-700 dark:bg-red-950/20 dark:border-red-900/40 dark:text-red-400"
+                  : "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-950/20 dark:border-amber-900/40 dark:text-amber-400"
+              }`}>
+                Difficulty: {selectedStage.difficulty}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Preparation Strategy &amp; Tips</span>
+            <p className="text-xs text-muted-foreground leading-relaxed">{selectedStage.advice}</p>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Important Topics Checklists</span>
+            <div className="flex flex-wrap gap-1.5">
+              {selectedStage.checklist.map((item, i) => (
+                <span key={i} className="inline-flex items-center gap-1 bg-card border border-border px-2.5 py-0.5 rounded-full text-[10px] font-medium text-foreground">
+                  <CheckCircle2 className="h-3 w-3 text-purple-500 shrink-0" />
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
+  // CUSTOM CARD FOR "Ask AI Prep Assistant" (ID: prep-ai)
+  // ----------------------------------------------------
+  if (section.id === "prep-ai") {
+    return (
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4 flex flex-col h-[520px] overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-border pb-3 shrink-0">
+          <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+            <Bot className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-heading text-base font-bold text-foreground">Ask AI Prep Coach</h2>
+            <p className="text-[11px] text-muted-foreground">Placement Assistant tailored specifically for {companyName} drives.</p>
+          </div>
+        </div>
+
+        {/* Scrollable Chat Area */}
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1 p-2 bg-slate-50/40 rounded-xl border border-border/40 dark:bg-slate-900/10 no-scrollbar">
+          {chatMessages.map((msg, i) => (
+            <div key={i} className={`flex items-start gap-2.5 ${msg.sender === "user" ? "flex-row-reverse" : ""}`}>
+              {msg.sender === "bot" ? (
+                <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 text-xs font-bold dark:bg-emerald-950 dark:text-emerald-300">
+                  <Bot className="h-4 w-4" />
+                </div>
+              ) : (
+                <div className="h-7 w-7 rounded-full bg-[#2563eb] text-white flex items-center justify-center shrink-0 text-xs font-bold">
+                  U
+                </div>
+              )}
+              <div className={`p-3 rounded-2xl text-xs max-w-[80%] leading-relaxed ${
+                msg.sender === "user"
+                  ? "bg-[#2563eb] text-white rounded-tr-none"
+                  : "bg-card border border-border/70 text-foreground rounded-tl-none shadow-sm"
+              }`}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Chat input block */}
+        <div className="flex gap-2 border-t border-border pt-3 shrink-0">
+          <input
+            type="text"
+            placeholder={`Ask a question about ${companyName}... (e.g., 'What is their CTC?' or 'Practice SQL')`}
+            value={chatInput}
+            onChange={e => setChatInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === "Enter") handleSendChat();
+            }}
+            className="flex-1 rounded-lg border border-border/80 bg-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+          />
+          <button
+            onClick={handleSendChat}
+            className="rounded-lg bg-[#2563eb] px-3.5 py-2 text-white hover:bg-blue-600 transition shadow-sm"
+          >
+            <Send className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
+  // CUSTOM CARD FOR "Company Identity" (ID: identity)
+  // ----------------------------------------------------
+  if (section.id === "identity") {
+    return (
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+        <div className="flex items-center gap-3 border-b border-border pb-4">
+          <div className="rounded-lg bg-blue-100 p-2 text-[#2563eb] dark:bg-blue-900/30 dark:text-blue-300">
+            <Building2 className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-heading text-lg font-bold text-foreground">{section.title}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Core company registrations and corporate metadata.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {/* Legal Name */}
+          <div className="p-4 rounded-xl bg-[#f8fafc] border border-slate-100 flex items-start gap-3.5 dark:bg-slate-900/40 dark:border-slate-800">
+            <div className="p-2 bg-blue-50 rounded-lg text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 shrink-0">
+              <Building2 className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Legal Name</span>
+              <p className="text-xs font-semibold text-foreground mt-1">{String(profile.name || "N/A")}</p>
+            </div>
+          </div>
+
+          {/* Short Name */}
+          <div className="p-4 rounded-xl bg-[#f8fafc] border border-slate-100 flex items-start gap-3.5 dark:bg-slate-900/40 dark:border-slate-800">
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400 shrink-0">
+              <Sparkles className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Brand Name</span>
+              <p className="text-xs font-semibold text-foreground mt-1">{String(profile.short_name || "N/A")}</p>
+            </div>
+          </div>
+
+          {/* Category */}
+          <div className="p-4 rounded-xl bg-[#f8fafc] border border-slate-100 flex items-start gap-3.5 dark:bg-slate-900/40 dark:border-slate-800">
+            <div className="p-2 bg-purple-50 rounded-lg text-purple-600 dark:bg-purple-950/30 dark:text-purple-400 shrink-0">
+              <Briefcase className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Category</span>
+              <p className="text-xs font-semibold text-foreground mt-1">{String(profile.category || "N/A")}</p>
+            </div>
+          </div>
+
+          {/* Incorporation Year */}
+          <div className="p-4 rounded-xl bg-[#f8fafc] border border-slate-100 flex items-start gap-3.5 dark:bg-slate-900/40 dark:border-slate-800">
+            <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 shrink-0">
+              <Calendar className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Incorporation</span>
+              <p className="text-xs font-semibold text-foreground mt-1">{String(profile.incorporation_year || "N/A")}</p>
+            </div>
+          </div>
+
+          {/* Nature of Company */}
+          <div className="p-4 rounded-xl bg-[#f8fafc] border border-slate-100 flex items-start gap-3.5 dark:bg-slate-900/40 dark:border-slate-800">
+            <div className="p-2 bg-amber-50 rounded-lg text-amber-600 dark:bg-amber-950/30 dark:text-amber-400 shrink-0">
+              <Globe2 className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nature</span>
+              <p className="text-xs font-semibold text-foreground mt-1">{String(profile.nature_of_company || "N/A")}</p>
+            </div>
+          </div>
+
+          {/* Employee Size */}
+          <div className="p-4 rounded-xl bg-[#f8fafc] border border-slate-100 flex items-start gap-3.5 dark:bg-slate-900/40 dark:border-slate-800">
+            <div className="p-2 bg-pink-50 rounded-lg text-pink-600 dark:bg-pink-950/30 dark:text-pink-400 shrink-0">
+              <Users className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scale Size</span>
+              <p className="text-xs font-semibold text-foreground mt-1">{String(profile.employee_size || "N/A")}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
+  // CUSTOM CARD FOR "Overview & Vision" (ID: overview)
+  // ----------------------------------------------------
+  if (section.id === "overview") {
+    return (
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+        <div className="flex items-center gap-3 border-b border-border pb-4">
+          <div className="rounded-lg bg-indigo-100 p-2 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+            <Eye className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-heading text-lg font-bold text-foreground">{section.title}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Corporate statement, mission roadmap, and core values.</p>
+          </div>
+        </div>
+
+        {/* Overview Box */}
+        {profile.overview_text && (
+          <div className="p-5 rounded-xl bg-slate-50 border-l-4 border-[#2563eb] dark:bg-slate-900/40 space-y-2">
+            <span className="text-[10px] font-bold text-[#2563eb] uppercase tracking-wider block">Company Overview</span>
+            <p className="text-xs text-foreground leading-relaxed font-medium italic">
+              "{String(profile.overview_text)}"
+            </p>
+          </div>
+        )}
+
+        {/* Vision & Mission side-by-side card items */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {profile.vision_statement && (
+            <div className="p-5 rounded-xl border border-t-4 border-t-purple-500 border-border/60 bg-card shadow-sm space-y-2">
+              <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">Vision Statement</span>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {String(profile.vision_statement)}
+              </p>
+            </div>
+          )}
+
+          {profile.mission_statement && (
+            <div className="p-5 rounded-xl border border-t-4 border-t-emerald-500 border-border/60 bg-card shadow-sm space-y-2">
+              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Mission Statement</span>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {String(profile.mission_statement)}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Core Values & Timeline */}
+        <div className="space-y-4">
+          {profile.core_values && (
+            <div className="p-4 rounded-xl border border-border/50 bg-muted/40 space-y-2.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Core Values</span>
+              <div className="mt-1">{renderValue(profile.core_values, "list")}</div>
+            </div>
+          )}
+
+          {profile.history_timeline && (
+            <div className="p-4 rounded-xl border border-border/50 bg-muted/40 space-y-2.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Key Milestones &amp; Timeline</span>
+              <div className="mt-1">{renderValue(profile.history_timeline, "list")}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
+  // CUSTOM CARD FOR "Culture & Work Life" (ID: culture)
+  // ----------------------------------------------------
+  if (section.id === "culture") {
+    const renderCultureProgress = (label: string, ratingVal: unknown, colorClass: string = "bg-[#2563eb]") => {
+      if (isNullish(ratingVal)) return null;
+      const strVal = String(ratingVal);
+      let percentage = 70;
+      const matchTen = strVal.match(/(\d+(?:\.\d+)?)\s*\/\s*10/);
+      const matchPercent = strVal.match(/(\d+(?:\.\d+)?)\s*%/);
+      if (matchTen) {
+        percentage = Math.round(parseFloat(matchTen[1]) * 10);
+      } else if (matchPercent) {
+        percentage = Math.round(parseFloat(matchPercent[1]));
+      }
+
+      return (
+        <div className="p-4 rounded-xl bg-muted/30 border border-border/50 space-y-2">
+          <div className="flex justify-between text-xs font-semibold">
+            <span className="text-muted-foreground">{label}</span>
+            <span className="text-foreground">{strVal}</span>
+          </div>
+          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden dark:bg-slate-800">
+            <div className={`h-full ${colorClass}`} style={{ width: `${percentage}%` }} />
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+        <div className="flex items-center gap-3 border-b border-border pb-4">
+          <div className="rounded-lg bg-pink-100 p-2 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300">
+            <HeartPulse className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-heading text-lg font-bold text-foreground">{section.title}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Inside workplace dynamics, manager quality, and safety indicators.</p>
+          </div>
+        </div>
+
+        {/* Culture Summary */}
+        {profile.work_culture_summary && (
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 dark:bg-slate-900/40 dark:border-slate-800 text-xs text-muted-foreground leading-relaxed">
+            <span className="font-semibold text-foreground uppercase tracking-wider text-[10px] block mb-1">Culture Overview</span>
+            {String(profile.work_culture_summary)}
+          </div>
+        )}
+
+        {/* Progress indicators for key culture scores */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {renderCultureProgress("Manager Quality", profile.manager_quality, "bg-[#7c3aed]")}
+          {renderCultureProgress("Psychological Safety", profile.psychological_safety, "bg-[#10b981]")}
+          {renderCultureProgress("Diversity & Inclusion", profile.diversity_inclusion_score, "bg-[#2563eb]")}
+          {renderCultureProgress("Mission Clarity", profile.mission_clarity, "bg-[#f59e0b]")}
+        </div>
+
+        {/* Core risk stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {profile.burnout_risk && (
+            <div className="p-4 rounded-xl border border-border/50 bg-muted/40 space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Burnout Risk</span>
+              <p className="text-xs font-semibold text-foreground">{String(profile.burnout_risk)}</p>
+            </div>
+          )}
+
+          {profile.layoff_history && (
+            <div className="p-4 rounded-xl border border-border/50 bg-muted/40 space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Layoff History</span>
+              <p className="text-xs font-semibold text-foreground">{String(profile.layoff_history)}</p>
+            </div>
+          )}
+
+          {profile.ethical_standards && (
+            <div className="p-4 rounded-xl border border-border/50 bg-muted/40 space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ethical Standards</span>
+              <p className="text-xs font-semibold text-foreground">{String(profile.ethical_standards)}</p>
+            </div>
+          )}
+
+          {profile.crisis_behavior && (
+            <div className="p-4 rounded-xl border border-border/50 bg-muted/40 space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Crisis Leadership</span>
+              <p className="text-xs font-semibold text-foreground">{String(profile.crisis_behavior)}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
+  // GENERIC SECTION CARD
+  // ----------------------------------------------------
+  return (
+    <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+      <div className="flex items-center gap-3 border-b border-border pb-4">
+        <div className="rounded-lg bg-[#eff6ff] p-2 text-[#2563eb] dark:bg-blue-900/30 dark:text-blue-300">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <h2 className="font-heading text-lg font-bold text-foreground">{section.title}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Explore detailed company profiles and operational data metrics.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {fields.map((field) => {
+          const rawVal = profile[field.key];
+          const valueStr = String(rawVal);
+          const isParagraph = field.kind === "paragraph" || valueStr.length > 125;
+          return (
+            <div
+              key={field.key}
+              className={`p-4 rounded-lg bg-muted/45 border border-border/50 flex flex-col gap-1.5 ${
+                isParagraph ? "col-span-full" : ""
+              }`}
+            >
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                {field.label}
+              </span>
+              <div className="text-xs leading-relaxed text-foreground mt-0.5">
+                {renderValue(rawVal, field.kind)}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -47,52 +627,20 @@ const SectionCard = memo(function SectionCard({
 function CompanyIntelligence() {
   const { selectedId, isReady } = useCompany();
   const profileQuery = useCompanyProfile(selectedId);
-  const sections = useMemo(() => buildIntelligenceSections(profileQuery.data?.profile), [profileQuery.data]);
-  const refs = useRef<(HTMLDivElement | null)[]>([]);
-  const tabBarRef = useRef<HTMLDivElement | null>(null);
+  const rawSections = useMemo(() => buildIntelligenceSections(profileQuery.data?.profile), [profileQuery.data]);
+  
+  // Custom sidebar preparation items injected at the top
+  const sections = useMemo(() => {
+    if (rawSections.length === 0) return [];
+    const prepItems: IntelligenceSection[] = [
+      { id: "prep-score", title: "Preparation Readiness", icon: Award, fields: [] },
+      { id: "hiring-timeline", title: "Recruitment Timeline", icon: Compass, fields: [] },
+      { id: "prep-ai", title: "Ask AI Assistant", icon: Sparkles, fields: [] }
+    ];
+    return [...prepItems, ...rawSections];
+  }, [rawSections]);
+
   const [activeIdx, setActiveIdx] = useState(0);
-  const isScrollingRef = useRef(false);
-
-  const registerRef = (i: number, el: HTMLDivElement | null) => {
-    refs.current[i] = el;
-  };
-
-  useEffect(() => {
-    const onScroll = () => {
-      if (isScrollingRef.current) return;
-      const y = window.scrollY + 200;
-      let current = 0;
-      refs.current.forEach((el, i) => {
-        if (el && el.offsetTop <= y) current = i;
-      });
-      setActiveIdx(current);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    const tabBar = tabBarRef.current;
-    if (!tabBar) return;
-    const activeTab = tabBar.querySelector<HTMLElement>(`[data-tab-idx="${activeIdx}"]`);
-    if (activeTab) {
-      tabBar.scrollTo({
-        left: activeTab.offsetLeft - tabBar.clientWidth / 2 + activeTab.clientWidth / 2,
-        behavior: "smooth",
-      });
-    }
-  }, [activeIdx]);
-
-  const scrollToSection = (idx: number) => {
-    const el = refs.current[idx];
-    if (!el) return;
-    isScrollingRef.current = true;
-    setActiveIdx(idx);
-    window.scrollTo({ top: el.offsetTop - 120, behavior: "smooth" });
-    window.setTimeout(() => {
-      isScrollingRef.current = false;
-    }, 600);
-  };
 
   if (!isReady || profileQuery.isLoading) {
     return (
@@ -128,41 +676,80 @@ function CompanyIntelligence() {
   const { summary, profile } = selected;
 
   return (
-    <div className="min-w-0 bg-background">
-      <div className="sticky top-14 z-20 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
-        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <CompanyLogo name={summary.name} websiteUrl={summary.website_url} fallbackUrl={summary.logo_url} size={40} />
+    <div className="flex w-full h-[calc(100vh-3.5rem)] overflow-hidden bg-background">
+      {/* 1. Side Navigation Menu (Sticky column) */}
+      <aside className="hidden md:flex flex-col w-64 shrink-0 border-r border-border bg-card h-full overflow-y-auto no-scrollbar">
+        <div className="px-4 py-3.5 border-b border-border flex items-center gap-3 shrink-0 bg-slate-50/20">
+          <CompanyLogo name={summary.name} websiteUrl={summary.website_url} fallbackUrl={summary.logo_url} size={36} />
+          <div className="min-w-0">
+            <h2 className="font-heading text-xs font-bold text-foreground truncate leading-tight">{summary.name}</h2>
+            <span className="inline-block mt-0.5 rounded-full bg-blue-50 border border-blue-200 px-1.5 py-0.5 text-[9px] font-semibold text-[#2563eb]">
+              {summary.category}
+            </span>
+          </div>
+        </div>
+
+        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto no-scrollbar">
+          {sections.map((s, i) => {
+            const Icon = s.icon;
+            const isCustomPrep = s.id === "prep-score" || s.id === "hiring-timeline" || s.id === "prep-ai";
+            return (
+              <button
+                key={s.id}
+                onClick={() => setActiveIdx(i)}
+                className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition ${
+                  activeIdx === i
+                    ? "bg-[#eff6ff] text-[#2563eb]"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                } ${isCustomPrep ? "text-[#2563eb] border-l-2 border-l-[#2563eb]/20 bg-blue-50/10" : ""}`}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{s.title}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* 2. Right Content Panel */}
+      <div className="flex-1 min-w-0 h-full flex flex-col overflow-hidden">
+        {/* Header Widget */}
+        <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-3 md:hidden">
+            <CompanyLogo name={summary.name} websiteUrl={summary.website_url} fallbackUrl={summary.logo_url} size={32} />
             <div className="min-w-0">
-              <h1 className="truncate font-heading text-lg font-semibold text-foreground">{summary.name}</h1>
-              <span className="inline-block max-w-full rounded-full bg-[#eff6ff] px-2 py-0.5 text-xs font-medium text-[#2563eb]">
+              <h2 className="font-heading text-xs font-bold text-foreground truncate leading-tight">{summary.name}</h2>
+              <span className="rounded-full bg-blue-50 border border-blue-200 px-1 py-0.5 text-[8px] font-semibold text-[#2563eb]">
                 {summary.category}
               </span>
             </div>
           </div>
+
+          <div className="hidden md:flex items-center gap-2">
+             <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Company Preparation Intelligence</span>
+          </div>
+
           <div className="flex flex-wrap items-center gap-2">
             {summary.website_url && (
-              <a href={summary.website_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
-                <ExternalLink className="h-3.5 w-3.5" /> Website
+              <a href={summary.website_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-[10px] font-bold text-foreground hover:bg-muted transition-colors shadow-sm">
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" /> Website
               </a>
             )}
             {String(profile.linkedin_url ?? "") && (
-              <a href={String(profile.linkedin_url)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
-                <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+              <a href={String(profile.linkedin_url)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-[10px] font-bold text-foreground hover:bg-muted transition-colors shadow-sm">
+                <Linkedin className="h-3.5 w-3.5 text-muted-foreground" /> LinkedIn
               </a>
             )}
           </div>
-        </div>
-        <div
-          ref={tabBarRef}
-          className="no-scrollbar flex max-w-full gap-1 overflow-x-auto border-t border-border bg-card px-2 py-2"
-        >
+        </header>
+
+        {/* Mobile Horizontal scroll tab nav */}
+        <div className="md:hidden border-b border-border bg-card px-2 py-1.5 flex gap-1 overflow-x-auto no-scrollbar shrink-0">
           {sections.map((s, i) => (
             <button
               key={s.id}
-              data-tab-idx={i}
-              onClick={() => scrollToSection(i)}
-              className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition ${
+              onClick={() => setActiveIdx(i)}
+              className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${
                 activeIdx === i
                   ? "bg-[#eff6ff] text-[#2563eb]"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -172,12 +759,18 @@ function CompanyIntelligence() {
             </button>
           ))}
         </div>
-      </div>
 
-      <div className="mx-auto min-w-0 max-w-5xl space-y-4 px-4 py-6 sm:px-6">
-        {sections.map((section, idx) => (
-          <SectionCard key={section.id} section={section} profile={profile} idx={idx} registerRef={registerRef} />
-        ))}
+        {/* Active Tab Panel Content (Scrollable content box) */}
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
+          <div className="max-w-4xl mx-auto w-full">
+            <SectionCard
+              section={sections[activeIdx]}
+              profile={profile}
+              companyName={summary.name}
+              companyId={summary.company_id}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

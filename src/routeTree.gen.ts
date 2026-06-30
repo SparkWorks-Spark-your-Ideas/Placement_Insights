@@ -9,15 +9,41 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as HiringDrivesRouteImport } from './routes/hiring-drives'
 import { Route as CompanyRouteImport } from './routes/company'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompanyIndexRouteImport } from './routes/company.index'
 import { Route as CompanySkillsRouteImport } from './routes/company.skills'
+import { Route as CompanyScanRouteImport } from './routes/company.scan'
 import { Route as CompanyIntelligenceRouteImport } from './routes/company.intelligence'
+import { Route as CompanyCompareRouteImport } from './routes/company.compare'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HiringDrivesRoute = HiringDrivesRouteImport.update({
+  id: '/hiring-drives',
+  path: '/hiring-drives',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompanyRoute = CompanyRouteImport.update({
   id: '/company',
   path: '/company',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -35,30 +61,58 @@ const CompanySkillsRoute = CompanySkillsRouteImport.update({
   path: '/skills',
   getParentRoute: () => CompanyRoute,
 } as any)
+const CompanyScanRoute = CompanyScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => CompanyRoute,
+} as any)
 const CompanyIntelligenceRoute = CompanyIntelligenceRouteImport.update({
   id: '/intelligence',
   path: '/intelligence',
   getParentRoute: () => CompanyRoute,
 } as any)
+const CompanyCompareRoute = CompanyCompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => CompanyRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/company': typeof CompanyRouteWithChildren
+  '/hiring-drives': typeof HiringDrivesRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/company/compare': typeof CompanyCompareRoute
   '/company/intelligence': typeof CompanyIntelligenceRoute
+  '/company/scan': typeof CompanyScanRoute
   '/company/skills': typeof CompanySkillsRoute
   '/company/': typeof CompanyIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
+  '/hiring-drives': typeof HiringDrivesRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/company/compare': typeof CompanyCompareRoute
   '/company/intelligence': typeof CompanyIntelligenceRoute
+  '/company/scan': typeof CompanyScanRoute
   '/company/skills': typeof CompanySkillsRoute
   '/company': typeof CompanyIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/company': typeof CompanyRouteWithChildren
+  '/hiring-drives': typeof HiringDrivesRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/company/compare': typeof CompanyCompareRoute
   '/company/intelligence': typeof CompanyIntelligenceRoute
+  '/company/scan': typeof CompanyScanRoute
   '/company/skills': typeof CompanySkillsRoute
   '/company/': typeof CompanyIndexRoute
 }
@@ -66,33 +120,87 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analytics'
     | '/company'
+    | '/hiring-drives'
+    | '/login'
+    | '/signup'
+    | '/company/compare'
     | '/company/intelligence'
+    | '/company/scan'
     | '/company/skills'
     | '/company/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/company/intelligence' | '/company/skills' | '/company'
+  to:
+    | '/'
+    | '/analytics'
+    | '/hiring-drives'
+    | '/login'
+    | '/signup'
+    | '/company/compare'
+    | '/company/intelligence'
+    | '/company/scan'
+    | '/company/skills'
+    | '/company'
   id:
     | '__root__'
     | '/'
+    | '/analytics'
     | '/company'
+    | '/hiring-drives'
+    | '/login'
+    | '/signup'
+    | '/company/compare'
     | '/company/intelligence'
+    | '/company/scan'
     | '/company/skills'
     | '/company/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   CompanyRoute: typeof CompanyRouteWithChildren
+  HiringDrivesRoute: typeof HiringDrivesRoute
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hiring-drives': {
+      id: '/hiring-drives'
+      path: '/hiring-drives'
+      fullPath: '/hiring-drives'
+      preLoaderRoute: typeof HiringDrivesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/company': {
       id: '/company'
       path: '/company'
       fullPath: '/company'
       preLoaderRoute: typeof CompanyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -116,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanySkillsRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/company/scan': {
+      id: '/company/scan'
+      path: '/scan'
+      fullPath: '/company/scan'
+      preLoaderRoute: typeof CompanyScanRouteImport
+      parentRoute: typeof CompanyRoute
+    }
     '/company/intelligence': {
       id: '/company/intelligence'
       path: '/intelligence'
@@ -123,17 +238,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyIntelligenceRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/company/compare': {
+      id: '/company/compare'
+      path: '/compare'
+      fullPath: '/company/compare'
+      preLoaderRoute: typeof CompanyCompareRouteImport
+      parentRoute: typeof CompanyRoute
+    }
   }
 }
 
 interface CompanyRouteChildren {
+  CompanyCompareRoute: typeof CompanyCompareRoute
   CompanyIntelligenceRoute: typeof CompanyIntelligenceRoute
+  CompanyScanRoute: typeof CompanyScanRoute
   CompanySkillsRoute: typeof CompanySkillsRoute
   CompanyIndexRoute: typeof CompanyIndexRoute
 }
 
 const CompanyRouteChildren: CompanyRouteChildren = {
+  CompanyCompareRoute: CompanyCompareRoute,
   CompanyIntelligenceRoute: CompanyIntelligenceRoute,
+  CompanyScanRoute: CompanyScanRoute,
   CompanySkillsRoute: CompanySkillsRoute,
   CompanyIndexRoute: CompanyIndexRoute,
 }
@@ -143,7 +269,11 @@ const CompanyRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
   CompanyRoute: CompanyRouteWithChildren,
+  HiringDrivesRoute: HiringDrivesRoute,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

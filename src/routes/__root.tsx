@@ -9,6 +9,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CompanyProvider } from "@/context/CompanyContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/context/AuthContext";
+import { AuthGuard } from "@/components/AuthGuard";
+
 
 function NotFoundComponent() {
   return (
@@ -103,10 +106,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <CompanyProvider>
-          <Outlet />
-          <Toaster />
-        </CompanyProvider>
+        <AuthProvider>
+          <CompanyProvider>
+            <AuthGuard>
+              <Outlet />
+            </AuthGuard>
+            <Toaster />
+          </CompanyProvider>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
