@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/context/AuthContext";
+import { OnboardingWizard } from "@/components/OnboardingWizard";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, needsOnboarding } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -35,6 +36,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const isAuthRoute = pathname === "/login" || pathname === "/signup";
   if (!user && !isAuthRoute) return null;
   if (user && isAuthRoute) return null;
+
+  if (user && needsOnboarding && !isAuthRoute) {
+    return <OnboardingWizard />;
+  }
 
   return <>{children}</>;
 }

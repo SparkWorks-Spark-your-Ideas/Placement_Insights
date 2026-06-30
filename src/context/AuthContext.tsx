@@ -8,6 +8,10 @@ export interface UserProfile {
   email: string;
   role: "student" | "officer" | "admin";
   created_at: string;
+  package_lpa?: number | null;
+  placement_status?: "placed" | "pending" | null;
+  batch_year?: number | null;
+  target_role?: string | null;
 }
 
 interface AuthContextType {
@@ -15,6 +19,8 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  needsOnboarding: boolean;
+  skillsCount: number | null;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -25,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [skillsCount, setSkillsCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
@@ -47,10 +54,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const fetchSkillsCount = async (userId: string) => {
+    if (!supabase) return 0;
+    try {
+      const { count, error } = await supabase
+        .from("student_skills")
+        .select("*", { count: "exact", head: true })
+        .eq("student_id", userId);
+      if (error) {
+        console.error("Error fetching skills count:", error);
+        return 0;
+      }
+      return count ?? 0;
+    } catch (err) {
+      console.error("Exception fetching skills count:", err);
+      return 0;
+    }
+  };
+
   const refreshProfile = async () => {
     if (user) {
-      const prof = await fetchProfile(user.id);
+      const [prof, sc] = await Promise.all([
+        fetchProfile(user.id),
+        fetchSkillsCount(user.id)
+      ]);
       setProfile(prof);
+      setSkillsCount(sc);
     }
   };
 
@@ -65,8 +94,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        const prof = await fetchProfile(session.user.id);
+        const [prof, sc] = await Promise.all([
+          fetchProfile(session.user.id),
+          fetchSkillsCount(session.user.id)
+        ]);
         setProfile(prof);
+        setSkillsCount(sc);
       }
       setLoading(false);
     });
@@ -77,10 +110,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         if (currentSession?.user) {
-          const prof = await fetchProfile(currentSession.user.id);
+          const [prof, sc] = await Promise.all([
+            fetchProfile(currentSession.user.id),
+            fetchSkillsCount(currentSession.user.id)
+          ]);
           setProfile(prof);
+          setSkillsCount(sc);
         } else {
           setProfile(null);
+          setSkillsCount(null);
         }
         setLoading(false);
       }
@@ -102,9 +140,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(null);
       setUser(null);
       setProfile(null);
+      setSkillsCount(null);
       setLoading(false);
     }
   };
+
+  const needsOnboarding = !!(
+    profile &&
+    profile.role === "student" &&
+    (profile.package_lpa === 0 || profile.package_lpa === null || (skillsCount !== null && skillsCount < 12))
+  );
 
   return (
     <AuthContext.Provider
@@ -113,6 +158,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         profile,
         loading,
+        needsOnboarding,
+        skillsCount,
         signOut,
         refreshProfile,
       }}

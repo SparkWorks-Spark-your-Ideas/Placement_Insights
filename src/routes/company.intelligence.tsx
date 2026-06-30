@@ -2,14 +2,91 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, memo } from "react";
 import {
   ExternalLink, Linkedin, Building2, Sparkles, Briefcase, Calendar, Globe2, Users, Eye, HeartPulse,
-  Award, MessageSquare, Send, Bot, AlertCircle, CheckCircle2, ChevronRight, Compass
+  Award, MessageSquare, Send, Bot, AlertCircle, CheckCircle2, ChevronRight, Compass, Loader2
 } from "lucide-react";
 import { useCompany } from "@/context/CompanyContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { renderValue } from "@/components/FieldRow";
 import { isNullish } from "@/lib/companyData";
 import { buildIntelligenceSections, type IntelligenceSection } from "@/data/intelligenceData";
-import { useCompanyProfile } from "@/lib/companyApi";
+import { useCompanyProfile, useCompanyReadiness } from "@/lib/companyApi";
+
+/** Lightweight inline markdown renderer — no external dependencies */
+function MarkdownText({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let listBuffer: string[] = [];
+  let listType: "ul" | "ol" | null = null;
+  let key = 0;
+
+  const flushList = () => {
+    if (listBuffer.length === 0) return;
+    const items = listBuffer.map((item, i) => (
+      <li key={i} className="ml-3">{renderInline(item)}</li>
+    ));
+    if (listType === "ol") {
+      elements.push(<ol key={key++} className="list-decimal ml-2 my-1 space-y-0.5">{items}</ol>);
+    } else {
+      elements.push(<ul key={key++} className="list-disc ml-2 my-1 space-y-0.5">{items}</ul>);
+    }
+    listBuffer = [];
+    listType = null;
+  };
+
+  const renderInline = (str: string): React.ReactNode[] => {
+    const parts: React.ReactNode[] = [];
+    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
+    let lastIndex = 0;
+    let match;
+    let i = 0;
+    while ((match = regex.exec(str)) !== null) {
+      if (match.index > lastIndex) parts.push(str.slice(lastIndex, match.index));
+      if (match[2]) {
+        parts.push(<strong key={i++} className="font-semibold text-foreground">{match[2]}</strong>);
+      } else if (match[3]) {
+        parts.push(<em key={i++} className="italic">{match[3]}</em>);
+      } else if (match[4]) {
+        parts.push(<code key={i++} className="bg-muted/60 border border-border/40 rounded px-1 py-0.5 text-[10px] font-mono">{match[4]}</code>);
+      }
+      lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < str.length) parts.push(str.slice(lastIndex));
+    return parts;
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    const bulletMatch = line.match(/^[\s]*[-*]\s+(.*)/);
+    if (bulletMatch) {
+      if (listType !== "ul") { flushList(); listType = "ul"; }
+      listBuffer.push(bulletMatch[1]);
+      continue;
+    }
+    const numberedMatch = line.match(/^[\s]*\d+\.\s+(.*)/);
+    if (numberedMatch) {
+      if (listType !== "ol") { flushList(); listType = "ol"; }
+      listBuffer.push(numberedMatch[1]);
+      continue;
+    }
+    flushList();
+    const headingMatch = line.match(/^(#{1,3})\s+(.*)/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      const cls = level === 1
+        ? "text-sm font-bold text-foreground mt-1 mb-0.5"
+        : level === 2
+        ? "text-xs font-bold text-foreground mt-1 mb-0.5"
+        : "text-[11px] font-semibold text-foreground/80 mt-0.5";
+      elements.push(<p key={key++} className={cls}>{renderInline(headingMatch[2])}</p>);
+      continue;
+    }
+    if (line.trim() === "") { elements.push(<div key={key++} className="h-1" />); continue; }
+    elements.push(<p key={key++} className="leading-relaxed">{renderInline(line)}</p>);
+  }
+  flushList();
+  return <div className="space-y-0.5 text-xs">{elements}</div>;
+}
+
 
 export const Route = createFileRoute("/company/intelligence")({
   component: CompanyIntelligence,
@@ -99,10 +176,12 @@ const SectionCard = memo(function SectionCard({
   companyId: number;
 }) {
   const Icon = section.icon;
+  const readinessQuery = useCompanyReadiness(companyId);
 
   // Custom states for interactive widgets
   const [activeTimelineIdx, setActiveTimelineIdx] = useState(0);
   const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "bot"; text: string }>>([
     {
       sender: "bot",
@@ -117,37 +196,68 @@ const SectionCard = memo(function SectionCard({
     return 70 + seed; // range 70% to 94% match
   }, [companyId]);
 
-  const handleSendChat = () => {
-    if (!chatInput.trim()) return;
+  const handleSendChat = async () => {
+    if (!chatInput.trim() || chatLoading) return;
     const userText = chatInput.trim();
     setChatMessages(prev => [...prev, { sender: "user", text: userText }]);
     setChatInput("");
+    setChatLoading(true);
 
-    // Simulate AI response based on keyword matching
-    setTimeout(() => {
-      const lower = userText.toLowerCase();
-      let reply = "";
+    try {
+      const history = chatMessages.map(m => ({
+        role: m.sender === "user" ? "user" : "model",
+        text: m.text
+      }));
 
-      if (lower.includes("sql") || lower.includes("dbms") || lower.includes("database")) {
-        reply = `${companyName}'s technical round checks DBMS and query structure. Focus on SQL Joins (Left vs Outer), Indexing optimizations, and CTEs. A common question: 'Find the second highest salary in an employee table without using the LIMIT keyword.'`;
-      } else if (lower.includes("coding") || lower.includes("dsa") || lower.includes("round")) {
-        reply = `For ${companyName}'s coding rounds, practice intermediate array manipulation, string patterns, and basic recursion. They usually evaluate syntax correctness, variable naming, and optimal space/time complexity.`;
-      } else if (lower.includes("salary") || lower.includes("package") || lower.includes("ctc")) {
-        reply = `Recruiting drives for ${companyName} offer Dream packages (6.5 - 8.5 LPA) and Standard roles (4.5 LPA). Preparing your fundamentals in object-oriented design and SQL will help you qualify for the Dream category.`;
-      } else if (lower.includes("culture") || lower.includes("work")) {
-        reply = `Our analytics show that ${companyName} has an organized enterprise work culture. They offer solid entry-level training, with standard project delivery frameworks. Burnout risk ranges from low to moderate.`;
+      const { sendCompanyGeminiChat } = await import("@/lib/companyApi");
+      const res = await sendCompanyGeminiChat({
+        data: {
+          companyId,
+          message: userText,
+          history
+        }
+      });
+
+      if (res.error) {
+        // Parse the error cleanly — strip raw JSON blobs
+        let errorMsg = res.error;
+        try {
+          const parsed = JSON.parse(res.error);
+          errorMsg = parsed?.error?.message || parsed?.message || res.error;
+        } catch { /* not JSON, use raw */ }
+        setChatMessages(prev => [...prev, { sender: "bot", text: `⚠️ ${errorMsg}`, isError: true }]);
       } else {
-        reply = `${companyName} recruiters look for clear CS fundamentals and clean verbal communication. Focus on your project architectures and database schemas. What specific prep area can I detail next?`;
+        setChatMessages(prev => [...prev, { sender: "bot", text: res.text }]);
       }
-
-      setChatMessages(prev => [...prev, { sender: "bot", text: reply }]);
-    }, 600);
+    } catch (err: any) {
+      console.error(err);
+      setChatMessages(prev => [{
+        ...prev,
+        sender: "bot",
+        text: "⚠️ Could not reach the AI Coach. Please check that GEMINI_API_KEY is set in your .env file.",
+        isError: true
+      }]);
+    } finally {
+      setChatLoading(false);
+    }
   };
 
   // ----------------------------------------------------
   // CUSTOM CARD FOR "Preparation Readiness" (ID: prep-score)
   // ----------------------------------------------------
   if (section.id === "prep-score") {
+    const liveScore = readinessQuery.data ? Math.round(readinessQuery.data.readiness_percentage) : matchScore;
+    const eligibilityLabel = liveScore >= 85 ? "Excellent Match" : liveScore >= 70 ? "High Eligibility" : liveScore >= 50 ? "Moderate Match" : "Needs Prep Focus";
+    const eligibilityColor = liveScore >= 85 ? "text-green-600 bg-green-50 border-green-100" : liveScore >= 70 ? "text-[#2563eb] bg-blue-50 border-blue-100" : "text-amber-600 bg-amber-50 border-amber-100";
+
+    const masteredList = readinessQuery.data?.mastered_skills && readinessQuery.data.mastered_skills.length > 0
+      ? readinessQuery.data.mastered_skills.join(", ")
+      : "No verified matching skills found. Make sure to complete your profile rating.";
+
+    const needsAttentionList = readinessQuery.data?.needs_attention_skills && readinessQuery.data.needs_attention_skills.length > 0
+      ? readinessQuery.data.needs_attention_skills.join(", ")
+      : "No skill gaps identified. You meet all company requirements!";
+
     return (
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
         <div className="flex items-center gap-3 border-b border-border pb-4">
@@ -160,39 +270,43 @@ const SectionCard = memo(function SectionCard({
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center gap-8 bg-slate-50/40 p-5 rounded-2xl border border-border/40 dark:bg-slate-900/10">
-          <div className="shrink-0 flex flex-col items-center">
-            <CircularGauge value={matchScore} />
-            <span className="text-[10px] font-bold text-[#2563eb] bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5 mt-2.5 dark:bg-blue-950/20 dark:border-blue-900/40">
-              High Eligibility
-            </span>
-          </div>
-
-          <div className="flex-1 space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-foreground">Preparation Checklists &amp; Badges</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Verified skill targets completed vs items needing focus.</p>
+        {readinessQuery.isLoading ? (
+          <div className="h-32 animate-pulse rounded-xl bg-muted/40 border border-border/40" />
+        ) : (
+          <div className="flex flex-col md:flex-row items-center gap-8 bg-slate-50/40 p-5 rounded-2xl border border-border/40 dark:bg-slate-900/10">
+            <div className="shrink-0 flex flex-col items-center">
+              <CircularGauge value={liveScore} />
+              <span className={`text-[10px] font-bold rounded-full px-2.5 py-0.5 mt-2.5 border ${eligibilityColor}`}>
+                {eligibilityLabel}
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="flex items-start gap-2.5 text-xs text-muted-foreground bg-card p-3 rounded-lg border border-border/40">
-                <CheckCircle2 className="h-4.5 w-4.5 text-green-600 shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold text-foreground block">Mastered (Verified)</span>
-                  Communication, Core OOPs pseudocodes, and Foundations of Python/Java.
-                </div>
+            <div className="flex-1 space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Preparation Checklists &amp; Badges</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Verified skill targets completed vs items needing focus.</p>
               </div>
 
-              <div className="flex items-start gap-2.5 text-xs text-muted-foreground bg-card p-3 rounded-lg border border-border/40">
-                <AlertCircle className="h-4.5 w-4.5 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold text-foreground block">Needs Attention</span>
-                  System Design scaling, DBMS transaction management, and raw SQL Joins.
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-start gap-2.5 text-xs text-muted-foreground bg-card p-3 rounded-lg border border-border/40">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-green-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-foreground block">Mastered (Verified)</span>
+                    {masteredList}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 text-xs text-muted-foreground bg-card p-3 rounded-lg border border-border/40">
+                  <AlertCircle className="h-4.5 w-4.5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-foreground block">Needs Attention</span>
+                    {needsAttentionList}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
@@ -304,32 +418,52 @@ const SectionCard = memo(function SectionCard({
                   U
                 </div>
               )}
-              <div className={`p-3 rounded-2xl text-xs max-w-[80%] leading-relaxed ${
+              <div className={`p-3 rounded-2xl text-xs max-w-[80%] ${
                 msg.sender === "user"
-                  ? "bg-[#2563eb] text-white rounded-tr-none"
+                  ? "bg-[#2563eb] text-white rounded-tr-none leading-relaxed"
+                  : (msg as any).isError
+                  ? "bg-red-50 border border-red-200 text-red-700 rounded-tl-none shadow-sm dark:bg-red-950/20 dark:border-red-800 dark:text-red-400"
                   : "bg-card border border-border/70 text-foreground rounded-tl-none shadow-sm"
               }`}>
-                {msg.text}
+                {msg.sender === "user" ? (
+                  <span>{msg.text}</span>
+                ) : (
+                  <MarkdownText text={msg.text} />
+                )}
               </div>
             </div>
           ))}
+
+          {chatLoading && (
+            <div className="flex items-start gap-2.5 animate-pulse">
+              <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 text-xs font-bold dark:bg-emerald-950 dark:text-emerald-300">
+                <Bot className="h-4 w-4" />
+              </div>
+              <div className="p-3 rounded-2xl text-xs bg-card border border-border/70 text-muted-foreground rounded-tl-none shadow-sm flex items-center gap-1.5 font-medium">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+                Prep Coach is thinking...
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Chat input block */}
         <div className="flex gap-2 border-t border-border pt-3 shrink-0">
           <input
             type="text"
-            placeholder={`Ask a question about ${companyName}... (e.g., 'What is their CTC?' or 'Practice SQL')`}
+            placeholder={chatLoading ? "Prep Coach is thinking..." : `Ask a question about ${companyName}... (e.g., 'What is their CTC?' or 'Practice SQL')`}
             value={chatInput}
             onChange={e => setChatInput(e.target.value)}
+            disabled={chatLoading}
             onKeyDown={e => {
               if (e.key === "Enter") handleSendChat();
             }}
-            className="flex-1 rounded-lg border border-border/80 bg-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+            className="flex-1 rounded-lg border border-border/80 bg-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#2563eb] disabled:opacity-50"
           />
           <button
             onClick={handleSendChat}
-            className="rounded-lg bg-[#2563eb] px-3.5 py-2 text-white hover:bg-blue-600 transition shadow-sm"
+            disabled={chatLoading || !chatInput.trim()}
+            className="rounded-lg bg-[#2563eb] px-3.5 py-2 text-white hover:bg-blue-600 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="h-3.5 w-3.5" />
           </button>
@@ -599,7 +733,7 @@ const SectionCard = memo(function SectionCard({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {fields.map((field) => {
+        {section.fields.map((field) => {
           const rawVal = profile[field.key];
           const valueStr = String(rawVal);
           const isParagraph = field.kind === "paragraph" || valueStr.length > 125;

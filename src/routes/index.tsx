@@ -4,6 +4,8 @@ import { Search, X, LogOut, User } from "lucide-react";
 import { useCompany } from "@/context/CompanyContext";
 import { CompanyCard } from "@/components/CompanyCard";
 import { useAuth } from "@/context/AuthContext";
+import { OnboardingWizard } from "@/components/OnboardingWizard";
+import { PlacementChatbot } from "@/components/PlacementChatbot";
 
 
 export const Route = createFileRoute("/")({
@@ -30,6 +32,7 @@ function Index() {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [filter, setFilter] = useState("all");
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim().toLowerCase()), 200);
@@ -73,6 +76,17 @@ function Index() {
                 <span className="rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold px-2 py-0.5 uppercase">
                   {profile.role}
                 </span>
+                {profile.role === "student" && (
+                  <>
+                    <div className="h-4 w-px bg-border mx-1" />
+                    <button
+                      onClick={() => setShowOnboarding(true)}
+                      className="flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-[#2563eb] transition-colors"
+                    >
+                      <User className="h-3.5 w-3.5" /> Profile Setup
+                    </button>
+                  </>
+                )}
                 <div className="h-4 w-px bg-border mx-1" />
                 <button
                   onClick={signOut}
@@ -166,6 +180,12 @@ function Index() {
           </div>
         )}
       </main>
+      
+      {showOnboarding && (
+        <OnboardingWizard isDismissible={true} onClose={() => setShowOnboarding(false)} />
+      )}
+
+      <PlacementChatbot />
     </div>
   );
 }

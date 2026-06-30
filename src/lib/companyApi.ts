@@ -8,6 +8,9 @@ import {
   type DashboardSkill,
 } from "@/lib/companyData";
 import { requireSupabaseClient } from "@/lib/supabaseClient";
+import { useAuth } from "@/context/AuthContext";
+import Groq from "groq-sdk";
+import { createServerFn } from "@tanstack/react-start";
 
 export interface CompanyRecord {
   company_id: number;
@@ -471,3 +474,383 @@ export function useCreateHiringDrive() {
     },
   });
 }
+
+export interface CompanyReadinessData {
+  readiness_percentage: number;
+  total_required_level: number;
+  student_earned_level: number;
+  mastered_skills: string[];
+  needs_attention_skills: string[];
+}
+
+export function useCompanyReadiness(companyId: number) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["company-readiness", companyId, user?.id],
+    enabled: !!companyId && !!user?.id,
+    queryFn: async (): Promise<CompanyReadinessData> => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase.rpc("calculate_company_readiness", {
+        target_company_id: companyId,
+        target_student_id: user?.id,
+      });
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        return {
+          readiness_percentage: 0,
+          total_required_level: 0,
+          student_earned_level: 0,
+          mastered_skills: [],
+          needs_attention_skills: [],
+        };
+      }
+
+      const row = data[0];
+      return {
+        readiness_percentage: Number(row.readiness_percentage),
+        total_required_level: Number(row.total_required_level),
+        student_earned_level: Number(row.student_earned_level),
+        mastered_skills: Array.isArray(row.mastered_skills) ? row.mastered_skills : [],
+        needs_attention_skills: Array.isArray(row.needs_attention_skills) ? row.needs_attention_skills : [],
+      };
+    },
+  });
+}
+
+export function useUpdateOnboarding() {
+  const { user, refreshProfile } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      packageLpa,
+      batchYear,
+      targetRole,
+      skills,
+    }: {
+      packageLpa: number;
+      batchYear: number;
+      targetRole: string;
+      skills: Array<{ skillName: string; level: number }>;
+    }) => {
+      if (!user?.id) throw new Error("User is not authenticated");
+      const supabase = requireSupabaseClient();
+
+      // 1. Update profiles table
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          package_lpa: packageLpa,
+          batch_year: batchYear,
+          placement_status: "pending",
+          target_role: targetRole,
+        })
+        .eq("id", user.id);
+
+      if (profileError) throw profileError;
+
+      // 2. Upsert student_skills table
+      const skillUpserts = skills.map((s) => ({
+        student_id: user.id,
+        skill_set_name: s.skillName,
+        current_level: s.level,
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error: skillsError } = await supabase
+        .from("student_skills")
+        .upsert(skillUpserts, { onConflict: "student_id,skill_set_name" });
+
+      if (skillsError) throw skillsError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["batch-skills"] });
+      queryClient.invalidateQueries({ queryKey: ["batch-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["company-readiness"] });
+      refreshProfile();
+    },
+  });
+}
+
+export function useAvailableRoles() {
+  return useQuery({
+    queryKey: ["available-roles"],
+    queryFn: async (): Promise<string[]> => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from("hiring_drives")
+        .select("title");
+
+      if (error) throw error;
+      const roles = (data ?? []).map((row: any) => String(row.title));
+      return Array.from(new Set(roles));
+    },
+  });
+}
+
+export interface SkillMaster {
+  skill_set_id: number;
+  skill_set_name: string;
+  short_name: string | null;
+}
+
+export function useSkillsMaster() {
+  return useQuery({
+    queryKey: ["skills-master"],
+    queryFn: async (): Promise<SkillMaster[]> => {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from("skill_set_master")
+        .select("skill_set_id, skill_set_name, short_name")
+        .order("skill_set_id", { ascending: true });
+
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+function flattenGlobalData(companies: any[], drives: any[], statsObj: any): string {
+  const totalStudents = Number(statsObj?.total_students || 0);
+  const placedCount = Number(statsObj?.placed_count || 0);
+  const avgSalary = Number(statsObj?.average_lpa || 0).toFixed(1);
+
+  let companyListStr = "";
+  if (companies && companies.length > 0) {
+    companyListStr = companies.map(c => `- ${c.name} (${c.category || "N/A"} Category) | HQ: ${c.headquarters_address || "N/A"} | URL: ${c.website_url || "N/A"}`).join("\n");
+  } else {
+    companyListStr = "No company records currently in database directory.";
+  }
+
+  let driveListStr = "";
+  if (drives && drives.length > 0) {
+    driveListStr = drives.map(d => `- Drive: ${d.title} | CTC Package: ${d.ctc || "N/A"} | Apply Deadline: ${d.deadline || "N/A"} | Eligibility: ${d.eligibility || "N/A"}`).join("\n");
+  } else {
+    driveListStr = "No active placement drives currently open.";
+  }
+
+  return `
+KITS Placement Statistics:
+- Total Enrolled Students: ${totalStudents}
+- Placed Student Count: ${placedCount}
+- Placement Ratio: ${totalStudents > 0 ? Math.round((placedCount / totalStudents) * 100) : 0}%
+- Average Placed Package: ${avgSalary} LPA
+
+Registered Corporations Directory:
+${companyListStr}
+
+Open Hiring Drives & Timelines:
+${driveListStr}
+`;
+}
+
+export const sendGlobalGeminiChat = createServerFn({ method: "POST" })
+  .validator((data: { message: string; history?: Array<{ role: string; text: string }> }) => data)
+  .handler(async ({ data: { message, history } }) => {
+    try {
+      const supabase = requireSupabaseClient();
+      
+      // 1. Fetch directory lists and stats (try RPC first, fallback to direct query)
+      const [companiesRes, drivesRes] = await Promise.all([
+        supabase.from("companies").select("name, category, headquarters_address, website_url"),
+        supabase.from("hiring_drives").select("title, ctc, deadline, eligibility"),
+      ]);
+
+      if (companiesRes.error) throw companiesRes.error;
+      if (drivesRes.error) throw drivesRes.error;
+
+      // Try the security-definer RPC first; if not deployed yet, fall back to raw query
+      let statsObj: any = {};
+      const rpcRes = await supabase.rpc("get_placement_stats");
+      if (!rpcRes.error && rpcRes.data) {
+        statsObj = rpcRes.data?.[0] || {};
+      } else {
+        // Fallback: direct query (may return 0 rows due to RLS if anon)
+        console.warn("get_placement_stats RPC not available, using direct query:", rpcRes.error?.message);
+        const profilesRes = await supabase.from("profiles").select("placement_status, package_lpa");
+        const rows = profilesRes.data ?? [];
+        const placed = rows.filter((r: any) => r.placement_status === "placed");
+        const pkgs = placed.map((r: any) => Number(r.package_lpa)).filter((n: number) => n > 0);
+        statsObj = {
+          total_students: rows.length,
+          placed_count: placed.length,
+          average_lpa: pkgs.length > 0 ? (pkgs.reduce((a: number, b: number) => a + b, 0) / pkgs.length).toFixed(1) : 0,
+        };
+      }
+
+      const contextStr = flattenGlobalData(companiesRes.data ?? [], drivesRes.data ?? [], statsObj);
+
+      // 2. Initialize Groq client
+      // VITE_-prefixed vars are reliably injected into import.meta.env in Vite SSR.
+      const apiKey = (import.meta as any).env?.VITE_GROQ_API_KEY
+        || (import.meta as any).env?.GROQ_API_KEY
+        || process.env.VITE_GROQ_API_KEY
+        || process.env.GROQ_API_KEY;
+      console.log("SERVER sendGlobalChat GROQ KEY CHECK:", apiKey ? `FOUND (length ${apiKey.length}, starts: ${apiKey.slice(0,8)})` : "NOT FOUND");
+      if (!apiKey) {
+        throw new Error("GROQ_API_KEY not found. Make sure VITE_GROQ_API_KEY is set in your .env file and restart the dev server.");
+      }
+      const groq = new Groq({ apiKey });
+
+      // 3. System prompt
+      const systemPrompt = `You are the official KITS Placement Navigator Assistant at Karunya Institute of Technology and Sciences. You are an expert placement counselor. Use the following context directory to answer the student's question accurately:
+${contextStr}
+Guidelines:
+1. Base your technical, financial, and active drive details ONLY on the provided database context.
+2. If the user asks a question whose details are missing from this context, reply gracefully: 'I don't have that specific detail in my database yet, but I highly recommend checking directly with the KITS Placement Cell.'
+3. Keep answers concise, helpful for engineering students seeking campus placements, formatted with bullet points, and highly professional. Never break character.`;
+
+      // 4. Build OpenAI-compatible message array for Groq
+      const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+        { role: "system", content: systemPrompt },
+      ];
+      if (history) {
+        for (const msg of history) {
+          messages.push({
+            role: msg.role === "user" ? "user" : "assistant",
+            content: msg.text,
+          });
+        }
+      }
+      messages.push({ role: "user", content: message });
+
+      // 5. Generate reply via Groq
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
+        messages,
+        temperature: 0.7,
+        max_tokens: 1024,
+      });
+
+      const text = completion.choices[0]?.message?.content || "No response text generated.";
+      return { text };
+    } catch (err: any) {
+      console.error("SERVER sendGlobalChat GROQ ERROR:", err);
+      return { error: parseGroqError(err) };
+    }
+  });
+
+/** Converts raw Groq / API errors into short, human-readable messages */
+function parseGroqError(err: any): string {
+  const raw = err?.message || String(err);
+  if (err?.status === 429 || raw.toLowerCase().includes("rate limit") || raw.toLowerCase().includes("quota")) {
+    return "The AI service is temporarily rate-limited. Please wait a moment and try again.";
+  }
+  if (err?.status === 401 || raw.toLowerCase().includes("api key") || raw.toLowerCase().includes("auth")) {
+    return "Invalid Groq API key. Please update VITE_GROQ_API_KEY in your .env file.";
+  }
+  if (err?.status === 503 || raw.toLowerCase().includes("unavailable")) {
+    return "The AI service is temporarily unavailable. Please try again in a moment.";
+  }
+  return raw;
+}
+
+export function flattenCompanyData(company: any): string {
+  if (!company) return "No specific context details found for this company in database.";
+
+  const culture = company.company_culture?.[0] || {};
+  const financials = company.company_financials?.[0] || {};
+  const techData = company.company_technologies?.[0] || {};
+  const techStack = techData.company_tech_stack?.[0]?.tech_stack || "N/A";
+
+  return `
+Company Profile: ${company.name || "N/A"} (${company.short_name || "N/A"})
+- Category: ${company.category || "N/A"}
+- Incorporation Year: ${company.incorporation_year || "N/A"}
+- Headquarters: ${company.headquarters_address || "N/A"}
+- Office Count: ${company.office_count || "N/A"}
+- Scale Size: ${company.employee_size || "N/A"}
+- Overview: ${company.overview_text || "N/A"}
+- Vision: ${company.vision_statement || "N/A"}
+- Mission: ${company.mission_statement || "N/A"}
+
+Financials:
+- Annual Revenue: ${financials.annual_revenue || "N/A"}
+- Annual Profit: ${financials.annual_profit || "N/A"}
+- Valuation: ${financials.valuation || "N/A"}
+- YoY Growth Rate: ${financials.yoy_growth_rate || "N/A"}
+- Profitability Status: ${financials.profitability_status || "N/A"}
+- Total Capital Raised: ${financials.total_capital_raised || "N/A"}
+
+Culture & Work Environment:
+- Employee Turnover: ${culture.employee_turnover || "N/A"}
+- Avg Retention Tenure: ${culture.avg_retention_tenure || "N/A"}
+- Layoff History: ${culture.layoff_history || "N/A"}
+- Manager Quality: ${culture.manager_quality || "N/A"}
+- Psychological Safety: ${culture.psychological_safety || "N/A"}
+- Burnout Risk: ${culture.burnout_risk || "N/A"}
+
+Technology:
+- Tech Stack: ${techStack}
+- AI/ML Adoption Level: ${techData.ai_ml_adoption_level || "N/A"}
+- R&D Investment: ${techData.r_and_d_investment || "N/A"}
+`;
+}
+
+export const sendCompanyGeminiChat = createServerFn({ method: "POST" })
+  .validator((data: { companyId: number; message: string; history?: Array<{ role: string; text: string }> }) => data)
+  .handler(async ({ data: { companyId, message, history } }) => {
+    try {
+      const supabase = requireSupabaseClient();
+      const { data: company } = await supabase
+        .from("companies")
+        .select(`
+          *,
+          company_culture (*),
+          company_financials (*),
+          company_technologies (
+            *,
+            company_tech_stack (*)
+          )
+        `)
+        .eq("company_id", companyId)
+        .maybeSingle();
+
+      const contextStr = flattenCompanyData(company);
+
+      // Initialize Groq client
+      const apiKey = (import.meta as any).env?.VITE_GROQ_API_KEY
+        || (import.meta as any).env?.GROQ_API_KEY
+        || process.env.VITE_GROQ_API_KEY
+        || process.env.GROQ_API_KEY;
+      console.log("SERVER sendCompanyChat GROQ KEY CHECK:", apiKey ? `FOUND (length ${apiKey.length}, starts: ${apiKey.slice(0,8)})` : "NOT FOUND");
+      if (!apiKey) {
+        throw new Error("GROQ_API_KEY not found. Make sure VITE_GROQ_API_KEY is set in your .env file and restart the dev server.");
+      }
+      const groq = new Groq({ apiKey });
+
+      const systemPrompt = `You are the official KITS Placement Prep Coach for ${company?.name || "this company"}. You are an expert placement counselor and advisor. Use the following company context to answer the student's question accurately:
+${contextStr}
+Guidelines:
+1. Base your technical, financial, and culture details strictly on the provided company database context.
+2. Answer the student's query regarding preparing for interviews, coding rounds, or specific topics for this company.
+3. Keep answers concise, helpful for engineering students, formatted with bullet points, and highly professional. Never break character.`;
+
+      // Build OpenAI-compatible message array for Groq
+      const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+        { role: "system", content: systemPrompt },
+      ];
+      if (history) {
+        for (const msg of history) {
+          messages.push({
+            role: msg.role === "user" ? "user" : "assistant",
+            content: msg.text,
+          });
+        }
+      }
+      messages.push({ role: "user", content: message });
+
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
+        messages,
+        temperature: 0.7,
+        max_tokens: 1024,
+      });
+
+      const text = completion.choices[0]?.message?.content || "No response text generated.";
+      return { text };
+    } catch (err: any) {
+      console.error("SERVER sendCompanyChat GROQ ERROR:", err);
+      return { error: parseGroqError(err) };
+    }
+  });
