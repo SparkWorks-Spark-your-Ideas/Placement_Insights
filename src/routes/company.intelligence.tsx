@@ -112,7 +112,7 @@ function CircularGauge({ value }: { value: number }) {
           cx="56"
           cy="56"
           r={radius}
-          className="stroke-[#2563eb] fill-none transition-all duration-700 ease-out"
+          className="stroke-primary fill-none transition-all duration-700 ease-out"
           strokeWidth="7"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
@@ -248,7 +248,7 @@ const SectionCard = memo(function SectionCard({
   if (section.id === "prep-score") {
     const liveScore = readinessQuery.data ? Math.round(readinessQuery.data.readiness_percentage) : matchScore;
     const eligibilityLabel = liveScore >= 85 ? "Excellent Match" : liveScore >= 70 ? "High Eligibility" : liveScore >= 50 ? "Moderate Match" : "Needs Prep Focus";
-    const eligibilityColor = liveScore >= 85 ? "text-green-600 bg-green-50 border-green-100" : liveScore >= 70 ? "text-[#2563eb] bg-blue-50 border-blue-100" : "text-amber-600 bg-amber-50 border-amber-100";
+    const eligibilityColor = liveScore >= 85 ? "text-emerald-800 bg-emerald-50 border-emerald-200/60" : liveScore >= 70 ? "text-amber-800 bg-amber-50 border-amber-200/60" : "text-stone-700 bg-stone-100 border-stone-200";
 
     const masteredList = readinessQuery.data?.mastered_skills && readinessQuery.data.mastered_skills.length > 0
       ? readinessQuery.data.mastered_skills.join(", ")
@@ -259,9 +259,9 @@ const SectionCard = memo(function SectionCard({
       : "No skill gaps identified. You meet all company requirements!";
 
     return (
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-6">
         <div className="flex items-center gap-3 border-b border-border pb-4">
-          <div className="rounded-lg bg-blue-100 p-2 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+          <div className="rounded-lg bg-primary/10 p-2 text-primary">
             <Award className="h-5 w-5" />
           </div>
           <div>
@@ -273,7 +273,7 @@ const SectionCard = memo(function SectionCard({
         {readinessQuery.isLoading ? (
           <div className="h-32 animate-pulse rounded-xl bg-muted/40 border border-border/40" />
         ) : (
-          <div className="flex flex-col md:flex-row items-center gap-8 bg-slate-50/40 p-5 rounded-2xl border border-border/40 dark:bg-slate-900/10">
+          <div className="flex flex-col md:flex-row items-center gap-8 bg-secondary/35 p-5 rounded-2xl border border-border/45">
             <div className="shrink-0 flex flex-col items-center">
               <CircularGauge value={liveScore} />
               <span className={`text-[10px] font-bold rounded-full px-2.5 py-0.5 mt-2.5 border ${eligibilityColor}`}>
@@ -288,16 +288,16 @@ const SectionCard = memo(function SectionCard({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex items-start gap-2.5 text-xs text-muted-foreground bg-card p-3 rounded-lg border border-border/40">
-                  <CheckCircle2 className="h-4.5 w-4.5 text-green-600 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2.5 text-xs text-muted-foreground bg-card p-3 rounded-lg border border-border/40 shadow-2xs">
+                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-700 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-foreground block">Mastered (Verified)</span>
                     {masteredList}
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 text-xs text-muted-foreground bg-card p-3 rounded-lg border border-border/40">
-                  <AlertCircle className="h-4.5 w-4.5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2.5 text-xs text-muted-foreground bg-card p-3 rounded-lg border border-border/40 shadow-2xs">
+                  <AlertCircle className="h-4.5 w-4.5 text-amber-700 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-foreground block">Needs Attention</span>
                     {needsAttentionList}
@@ -318,9 +318,9 @@ const SectionCard = memo(function SectionCard({
     const selectedStage = TIMELINE_STAGES[activeTimelineIdx];
 
     return (
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-6">
         <div className="flex items-center gap-3 border-b border-border pb-4">
-          <div className="rounded-lg bg-purple-100 p-2 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+          <div className="rounded-lg bg-primary/10 p-2 text-primary">
             <Compass className="h-5 w-5" />
           </div>
           <div>
@@ -335,10 +335,10 @@ const SectionCard = memo(function SectionCard({
             <button
               key={idx}
               onClick={() => setActiveTimelineIdx(idx)}
-              className={`flex-1 text-center shrink-0 min-w-[130px] rounded-lg p-2.5 border transition ${
+              className={`flex-1 text-center shrink-0 min-w-[130px] rounded-lg p-2.5 border transition cursor-pointer ${
                 activeTimelineIdx === idx
-                  ? "bg-purple-50 border-purple-200 text-purple-800 dark:bg-purple-950/20 dark:border-purple-900/40"
-                  : "bg-muted/40 border-border/40 text-muted-foreground hover:bg-muted"
+                  ? "bg-accent/15 border-accent/70 text-amber-900"
+                  : "bg-secondary/40 border-border/40 text-muted-foreground hover:bg-secondary"
               }`}
             >
               <span className="text-[10px] font-bold block uppercase tracking-wider">Round {idx + 1}</span>
@@ -348,20 +348,20 @@ const SectionCard = memo(function SectionCard({
         </div>
 
         {/* Stage details panel */}
-        <div className={`p-5 rounded-2xl border border-border/60 border-t-4 ${selectedStage.color} bg-muted/20 space-y-4`}>
+        <div className={`p-5 rounded-2xl border border-border/60 border-t-4 border-t-primary bg-secondary/15 space-y-4`}>
           <div className="flex justify-between items-center flex-wrap gap-2">
             <div>
-              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block">Round Focus</span>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-wider block">Round Focus</span>
               <h3 className="text-sm font-bold text-foreground mt-0.5">{selectedStage.title}</h3>
             </div>
             <div className="flex gap-2">
-              <span className="text-[10px] font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+              <span className="text-[10px] font-bold bg-card border border-border px-2.5 py-0.5 rounded-full text-foreground shadow-2xs">
                 Duration: {selectedStage.duration}
               </span>
-              <span className={`text-[10px] font-bold border px-2 py-0.5 rounded-full ${
+              <span className={`text-[10px] font-bold border px-2.5 py-0.5 rounded-full ${
                 selectedStage.difficulty === "Hard"
-                  ? "bg-red-50 border-red-200 text-red-700 dark:bg-red-950/20 dark:border-red-900/40 dark:text-red-400"
-                  : "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-950/20 dark:border-amber-900/40 dark:text-amber-400"
+                  ? "bg-rose-50 border-rose-200 text-rose-800"
+                  : "bg-amber-50 border-amber-200 text-amber-800"
               }`}>
                 Difficulty: {selectedStage.difficulty}
               </span>
@@ -369,16 +369,16 @@ const SectionCard = memo(function SectionCard({
           </div>
 
           <div className="space-y-1.5">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Preparation Strategy &amp; Tips</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Preparation Strategy &amp; Tips</span>
             <p className="text-xs text-muted-foreground leading-relaxed">{selectedStage.advice}</p>
           </div>
 
           <div className="space-y-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Important Topics Checklists</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Important Topics Checklists</span>
             <div className="flex flex-wrap gap-1.5">
               {selectedStage.checklist.map((item, i) => (
-                <span key={i} className="inline-flex items-center gap-1 bg-card border border-border px-2.5 py-0.5 rounded-full text-[10px] font-medium text-foreground">
-                  <CheckCircle2 className="h-3 w-3 text-purple-500 shrink-0" />
+                <span key={i} className="inline-flex items-center gap-1 bg-card border border-border px-2.5 py-0.5 rounded-full text-[10px] font-medium text-foreground shadow-2xs">
+                  <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
                   {item}
                 </span>
               ))}
@@ -394,9 +394,9 @@ const SectionCard = memo(function SectionCard({
   // ----------------------------------------------------
   if (section.id === "prep-ai") {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4 flex flex-col h-[520px] overflow-hidden">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-4 flex flex-col h-[520px] overflow-hidden">
         <div className="flex items-center gap-3 border-b border-border pb-3 shrink-0">
-          <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+          <div className="rounded-lg bg-accent/10 p-2 text-accent-foreground">
             <Bot className="h-5 w-5" />
           </div>
           <div>
@@ -406,24 +406,24 @@ const SectionCard = memo(function SectionCard({
         </div>
 
         {/* Scrollable Chat Area */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1 p-2 bg-slate-50/40 rounded-xl border border-border/40 dark:bg-slate-900/10 no-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1 p-2 bg-secondary/15 rounded-xl border border-border/40 no-scrollbar">
           {chatMessages.map((msg, i) => (
             <div key={i} className={`flex items-start gap-2.5 ${msg.sender === "user" ? "flex-row-reverse" : ""}`}>
               {msg.sender === "bot" ? (
-                <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 text-xs font-bold dark:bg-emerald-950 dark:text-emerald-300">
+                <div className="h-7 w-7 rounded-full bg-accent/10 text-accent-foreground flex items-center justify-center shrink-0 text-xs font-bold border border-accent/20">
                   <Bot className="h-4 w-4" />
                 </div>
               ) : (
-                <div className="h-7 w-7 rounded-full bg-[#2563eb] text-white flex items-center justify-center shrink-0 text-xs font-bold">
+                <div className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 text-xs font-bold">
                   U
                 </div>
               )}
               <div className={`p-3 rounded-2xl text-xs max-w-[80%] ${
                 msg.sender === "user"
-                  ? "bg-[#2563eb] text-white rounded-tr-none leading-relaxed"
+                  ? "bg-primary text-primary-foreground rounded-tr-none leading-relaxed shadow-sm"
                   : (msg as any).isError
-                  ? "bg-red-50 border border-red-200 text-red-700 rounded-tl-none shadow-sm dark:bg-red-950/20 dark:border-red-800 dark:text-red-400"
-                  : "bg-card border border-border/70 text-foreground rounded-tl-none shadow-sm"
+                  ? "bg-rose-50 border border-rose-200 text-rose-800 rounded-tl-none shadow-sm"
+                  : "bg-card border border-border/70 text-foreground rounded-tl-none shadow-sm font-medium"
               }`}>
                 {msg.sender === "user" ? (
                   <span>{msg.text}</span>
@@ -436,11 +436,11 @@ const SectionCard = memo(function SectionCard({
 
           {chatLoading && (
             <div className="flex items-start gap-2.5 animate-pulse">
-              <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 text-xs font-bold dark:bg-emerald-950 dark:text-emerald-300">
+              <div className="h-7 w-7 rounded-full bg-accent/10 text-accent-foreground flex items-center justify-center shrink-0 text-xs font-bold border border-accent/20">
                 <Bot className="h-4 w-4" />
               </div>
               <div className="p-3 rounded-2xl text-xs bg-card border border-border/70 text-muted-foreground rounded-tl-none shadow-sm flex items-center gap-1.5 font-medium">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                 Prep Coach is thinking...
               </div>
             </div>
@@ -458,12 +458,12 @@ const SectionCard = memo(function SectionCard({
             onKeyDown={e => {
               if (e.key === "Enter") handleSendChat();
             }}
-            className="flex-1 rounded-lg border border-border/80 bg-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#2563eb] disabled:opacity-50"
+            className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50 shadow-2xs"
           />
           <button
             onClick={handleSendChat}
             disabled={chatLoading || !chatInput.trim()}
-            className="rounded-lg bg-[#2563eb] px-3.5 py-2 text-white hover:bg-blue-600 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-lg bg-primary px-3.5 py-2 text-primary-foreground hover:opacity-90 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <Send className="h-3.5 w-3.5" />
           </button>
@@ -477,9 +477,9 @@ const SectionCard = memo(function SectionCard({
   // ----------------------------------------------------
   if (section.id === "identity") {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-6">
         <div className="flex items-center gap-3 border-b border-border pb-4">
-          <div className="rounded-lg bg-blue-100 p-2 text-[#2563eb] dark:bg-blue-900/30 dark:text-blue-300">
+          <div className="rounded-lg bg-primary/10 p-2 text-primary">
             <Building2 className="h-5 w-5" />
           </div>
           <div>
@@ -490,12 +490,12 @@ const SectionCard = memo(function SectionCard({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {/* Legal Name */}
-          <div className="p-4 rounded-xl bg-[#f8fafc] border border-slate-100 flex items-start gap-3.5 dark:bg-slate-900/40 dark:border-slate-800">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 shrink-0">
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/40 flex items-start gap-3.5">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary shrink-0">
               <Building2 className="h-4.5 w-4.5" />
             </div>
             <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Legal Name</span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Legal Name</span>
               <p className="text-xs font-semibold text-foreground mt-1">{String(profile.name || "N/A")}</p>
             </div>
           </div>
@@ -721,9 +721,9 @@ const SectionCard = memo(function SectionCard({
   // GENERIC SECTION CARD
   // ----------------------------------------------------
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+    <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-6">
       <div className="flex items-center gap-3 border-b border-border pb-4">
-        <div className="rounded-lg bg-[#eff6ff] p-2 text-[#2563eb] dark:bg-blue-900/30 dark:text-blue-300">
+        <div className="rounded-lg bg-primary/10 p-2 text-primary">
           <Icon className="h-5 w-5" />
         </div>
         <div>
@@ -740,7 +740,7 @@ const SectionCard = memo(function SectionCard({
           return (
             <div
               key={field.key}
-              className={`p-4 rounded-lg bg-muted/45 border border-border/50 flex flex-col gap-1.5 ${
+              className={`p-4 rounded-lg bg-secondary/20 border border-border/40 flex flex-col gap-1.5 ${
                 isParagraph ? "col-span-full" : ""
               }`}
             >
@@ -796,7 +796,7 @@ function CompanyIntelligence() {
           <p className="text-sm text-muted-foreground">Unable to load company intelligence.</p>
           <button
             onClick={() => profileQuery.refetch()}
-            className="mt-3 rounded-md bg-[#2563eb] px-3 py-1.5 text-xs font-semibold text-white"
+            className="mt-3 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90"
           >
             Retry
           </button>
@@ -813,17 +813,17 @@ function CompanyIntelligence() {
     <div className="flex w-full h-[calc(100vh-3.5rem)] overflow-hidden bg-background">
       {/* 1. Side Navigation Menu (Sticky column) */}
       <aside className="hidden md:flex flex-col w-64 shrink-0 border-r border-border bg-card h-full overflow-y-auto no-scrollbar">
-        <div className="px-4 py-3.5 border-b border-border flex items-center gap-3 shrink-0 bg-slate-50/20">
+        <div className="px-4 py-3.5 border-b border-border flex items-center gap-3 shrink-0 bg-secondary/15">
           <CompanyLogo name={summary.name} websiteUrl={summary.website_url} fallbackUrl={summary.logo_url} size={36} />
           <div className="min-w-0">
             <h2 className="font-heading text-xs font-bold text-foreground truncate leading-tight">{summary.name}</h2>
-            <span className="inline-block mt-0.5 rounded-full bg-blue-50 border border-blue-200 px-1.5 py-0.5 text-[9px] font-semibold text-[#2563eb]">
+            <span className="inline-block mt-0.5 rounded-full bg-accent/25 border border-accent/40 px-1.5 py-0.5 text-[9px] font-semibold text-[#854d0e]">
               {summary.category}
             </span>
           </div>
         </div>
 
-        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto no-scrollbar">
+        <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto no-scrollbar">
           {sections.map((s, i) => {
             const Icon = s.icon;
             const isCustomPrep = s.id === "prep-score" || s.id === "hiring-timeline" || s.id === "prep-ai";
@@ -831,11 +831,13 @@ function CompanyIntelligence() {
               <button
                 key={s.id}
                 onClick={() => setActiveIdx(i)}
-                className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition ${
+                className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left text-xs font-semibold transition border cursor-pointer ${
                   activeIdx === i
-                    ? "bg-[#eff6ff] text-[#2563eb]"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                } ${isCustomPrep ? "text-[#2563eb] border-l-2 border-l-[#2563eb]/20 bg-blue-50/10" : ""}`}
+                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                    : isCustomPrep
+                    ? "border-accent/40 bg-accent/5 text-[#854d0e] hover:bg-accent/10"
+                    : "border-transparent text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 <span className="truncate">{s.title}</span>
@@ -853,7 +855,7 @@ function CompanyIntelligence() {
             <CompanyLogo name={summary.name} websiteUrl={summary.website_url} fallbackUrl={summary.logo_url} size={32} />
             <div className="min-w-0">
               <h2 className="font-heading text-xs font-bold text-foreground truncate leading-tight">{summary.name}</h2>
-              <span className="rounded-full bg-blue-50 border border-blue-200 px-1 py-0.5 text-[8px] font-semibold text-[#2563eb]">
+              <span className="rounded-full bg-accent/25 border border-accent/40 px-1 py-0.5 text-[8px] font-semibold text-[#854d0e]">
                 {summary.category}
               </span>
             </div>
@@ -885,7 +887,7 @@ function CompanyIntelligence() {
               onClick={() => setActiveIdx(i)}
               className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${
                 activeIdx === i
-                  ? "bg-[#eff6ff] text-[#2563eb]"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >

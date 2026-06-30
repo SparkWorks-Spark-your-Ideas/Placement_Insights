@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Search, X, LogOut, User } from "lucide-react";
 import { useCompany } from "@/context/CompanyContext";
@@ -6,6 +6,7 @@ import { CompanyCard } from "@/components/CompanyCard";
 import { useAuth } from "@/context/AuthContext";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { PlacementChatbot } from "@/components/PlacementChatbot";
+import { PrismaHero } from "@/components/ui/prisma-hero";
 
 
 export const Route = createFileRoute("/")({
@@ -19,11 +20,11 @@ export const Route = createFileRoute("/")({
 });
 
 const FILTERS = [
-  { id: "all", label: "All", color: "bg-foreground text-background" },
-  { id: "super dream", label: "Super Dream", color: "bg-[#7c3aed] text-white" },
-  { id: "dream", label: "Dream", color: "bg-[#2563eb] text-white" },
-  { id: "standard", label: "Standard", color: "bg-[#16a34a] text-white" },
-  { id: "regular", label: "Regular", color: "bg-[#d97706] text-white" },
+  { id: "all", label: "All", color: "bg-primary text-primary-foreground border-primary" },
+  { id: "super dream", label: "Super Dream", color: "bg-amber-700 text-white border-amber-700" },
+  { id: "dream", label: "Dream", color: "bg-emerald-800 text-white border-emerald-800" },
+  { id: "standard", label: "Standard", color: "bg-lime-800 text-white border-lime-800" },
+  { id: "regular", label: "Regular", color: "bg-stone-700 text-white border-stone-700" },
 ];
 
 function Index() {
@@ -60,72 +61,119 @@ function Index() {
     });
   }, [companies, filter, debounced]);
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <span className="inline-flex items-center rounded-full bg-[#eff6ff] px-3 py-1 text-xs font-semibold tracking-wide text-[#2563eb]">
-              KITS · INTELLIGENCE PLATFORM
-            </span>
-            {profile && (
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-1.5 pl-3 pr-2 shadow-sm text-xs">
-                <span className="font-medium text-foreground">
-                  {profile.full_name}
-                </span>
-                <span className="rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold px-2 py-0.5 uppercase">
-                  {profile.role}
-                </span>
-                {profile.role === "student" && (
-                  <>
-                    <div className="h-4 w-px bg-border mx-1" />
-                    <button
-                      onClick={() => setShowOnboarding(true)}
-                      className="flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-[#2563eb] transition-colors"
-                    >
-                      <User className="h-3.5 w-3.5" /> Profile Setup
-                    </button>
-                  </>
-                )}
-                <div className="h-4 w-px bg-border mx-1" />
-                <button
-                  onClick={signOut}
-                  className="flex items-center gap-1 font-semibold text-red-600 hover:text-red-500 transition-colors"
-                >
-                  <LogOut className="h-3.5 w-3.5" /> Sign Out
-                </button>
-              </div>
-            )}
-          </div>
-          <h1 className="mt-4 font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Karunya Institute Of Technology and Sciences Companies Research &amp; Placement Analytics Portal
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-            Your strategic edge for campus placements.
-          </p>
-          <div className="relative mt-6 max-w-xl">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search companies by name, location, or category…"
-              className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-10 text-sm outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20"
-            />
-            {query && (
-              <button
-                onClick={() => setQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label="Clear search"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+  const navItems = [
+    { label: "Home", to: "/" },
+    { label: "Analytics", to: "/analytics" },
+    { label: "Compare", to: "/company/compare" },
+    { label: "Hiring Drives", to: "/hiring-drives" },
+    { label: "Intelligence", to: "/company/intelligence" },
+  ];
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="mb-6 flex flex-wrap gap-2">
+  const handleExploreClick = () => {
+    document.getElementById("explore-section")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const navbarContent = (
+    <nav className="flex items-center justify-between gap-3 rounded-b-2xl bg-black/80 backdrop-blur px-4 py-3 sm:gap-6 md:gap-8 md:rounded-b-3xl md:px-8 max-w-5xl mx-auto border-x border-b border-[#E1E0CC]/10 shadow-lg mt-0">
+      <div className="flex items-center gap-4 sm:gap-6 md:gap-8">
+        {navItems.map((item) => (
+          <Link
+            key={item.label}
+            to={item.to}
+            className="text-[11px] font-medium transition-colors sm:text-xs md:text-sm hover:text-white"
+            style={{ color: "rgba(225, 224, 204, 0.8)" }}
+            activeProps={{ style: { color: "#E1E0CC", fontWeight: "bold" } }}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
+      
+      {profile ? (
+        <div className="flex items-center gap-3 text-xs">
+          <span className="font-medium text-[#E1E0CC]/90 max-sm:hidden">
+            {profile.full_name}
+          </span>
+          <span className="rounded-full bg-[#E1E0CC]/10 text-[#E1E0CC] text-[10px] font-semibold px-2 py-0.5 uppercase tracking-wide border border-[#E1E0CC]/20 max-sm:hidden">
+            {profile.role}
+          </span>
+          {profile.role === "student" && (
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="flex items-center gap-1 font-semibold text-[#E1E0CC] hover:text-white transition-colors cursor-pointer"
+            >
+              <User className="h-3.5 w-3.5" /> <span className="max-sm:hidden">Profile Setup</span>
+            </button>
+          )}
+          <button
+            onClick={signOut}
+            className="flex items-center gap-1 font-semibold text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+          >
+            <LogOut className="h-3.5 w-3.5" /> <span className="max-sm:hidden">Sign Out</span>
+          </button>
+        </div>
+      ) : (
+        <Link
+          to="/login"
+          className="text-xs sm:text-sm font-semibold text-black bg-[#E1E0CC] px-4 py-1.5 rounded-full hover:bg-white transition-colors"
+        >
+          Sign In
+        </Link>
+      )}
+    </nav>
+  );
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <PrismaHero
+        title="Placement Insights"
+        subtitle="Your strategic edge for campus placements. Access real-time intelligence, interview preparation, and key statistics of top recruiters at Karunya Institute of Technology and Sciences."
+        buttonText="Explore Companies"
+        onButtonClick={handleExploreClick}
+        navbarContent={navbarContent}
+      />
+
+      <main id="explore-section" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 scroll-mt-6">
+        
+        {/* Centered Badge */}
+        <div className="flex justify-center mb-4">
+          <span className="inline-flex items-center rounded-full bg-accent/40 border border-accent/70 px-4 py-1 text-[10px] font-semibold tracking-wider text-foreground uppercase shadow-sm">
+            KITS · PLACEMENT SYSTEM
+          </span>
+        </div>
+
+        {/* Centered Title */}
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-heading font-semibold text-center text-foreground tracking-tight mb-4">
+          Placement Intelligence Directory
+        </h2>
+
+        {/* Centered Description */}
+        <p className="text-sm md:text-base text-muted-foreground text-center max-w-3xl mx-auto mb-8 leading-relaxed">
+          Explore {companies.length} leading companies hiring from KARUNYA UNIVERSITY. Access comprehensive skill maps, interview roadmaps, and historic placements data.
+        </p>
+
+        {/* Centered Search Bar */}
+        <div className="relative max-w-2xl mx-auto mb-8">
+          <Search className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search companies by name or type..."
+            className="w-full rounded-full border border-border bg-card py-3 pl-12 pr-12 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 text-foreground text-center placeholder:text-muted-foreground/60 shadow-sm"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Centered Filter Chips */}
+        <div className="mb-12 flex flex-wrap justify-center gap-2">
           {FILTERS.map((f) => {
             const active = filter === f.id;
             const count = counts[f.id] ?? 0;
@@ -133,18 +181,18 @@ function Index() {
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                  active ? f.color : "border border-border bg-card text-foreground hover:bg-muted"
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase transition tracking-wider border cursor-pointer ${
+                  active
+                    ? `${f.color} shadow-sm`
+                    : "border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent/20"
                 }`}
               >
-                {f.label}
-                <span className={`rounded-full px-1.5 text-[10px] ${active ? "bg-white/20" : "bg-muted text-muted-foreground"}`}>
-                  {count}
-                </span>
+                {f.label} ({count})
               </button>
             );
           })}
         </div>
+
 
         {companiesError ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">

@@ -39,7 +39,6 @@ function MarkdownText({ text }: { text: string }) {
   };
 
   const renderInline = (str: string): React.ReactNode[] => {
-    // Process bold (**text**), italic (*text*), and inline code (`code`)
     const parts: React.ReactNode[] = [];
     const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
     let lastIndex = 0;
@@ -155,7 +154,6 @@ export function PlacementChatbot() {
       });
 
       if (response.error) {
-        // Parse the error cleanly — sometimes it's a JSON string
         let errorMsg = response.error;
         try {
           const parsed = JSON.parse(response.error);
@@ -187,10 +185,10 @@ export function PlacementChatbot() {
 
   return (
     <>
-      {/* Floating Trigger Badge */}
+      {/* Floating Trigger Badge - Glassmorphic Organic Theme */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none cursor-pointer"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-accent text-white shadow-lg border border-white/20 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none cursor-pointer"
         aria-label="Toggle Placement AI Chatbot"
       >
         {isOpen ? (
@@ -200,16 +198,16 @@ export function PlacementChatbot() {
         )}
       </button>
 
-      {/* Popup Chat Card Window */}
+      {/* Popup Chat Card Window - Glassmorphic Style */}
       {isOpen && (
-        <Card className="fixed bottom-24 right-6 z-50 w-full max-w-sm h-[500px] flex flex-col border-none shadow-2xl bg-card text-card-foreground overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-200">
+        <Card className="fixed bottom-24 right-6 z-50 w-[calc(100vw-3rem)] sm:w-[380px] h-[500px] flex flex-col border border-primary/10 shadow-2xl bg-card/85 backdrop-blur-md text-card-foreground overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-200 rounded-2xl">
           
-          {/* Accent Header Gradient */}
-          <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600" />
+          {/* Accent Header Gradient matching Natural Grass and Sun Gold */}
+          <div className="h-1.5 w-full bg-gradient-to-r from-primary via-accent to-amber-700" />
           
-          <CardHeader className="p-4 pb-3 border-b border-border flex flex-row items-center gap-2.5 shrink-0 bg-slate-50/20">
-            <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 shrink-0">
-              <Bot className="h-4 w-4" />
+          <CardHeader className="p-4 pb-3 border-b border-border/60 flex flex-row items-center gap-2.5 shrink-0 bg-secondary/35 backdrop-blur-xs">
+            <span className="p-2 rounded-xl bg-primary/10 text-primary shrink-0 border border-primary/20">
+              <Bot className="h-4.5 w-4.5" />
             </span>
             <div className="min-w-0">
               <CardTitle className="font-heading text-xs font-bold text-foreground truncate">
@@ -221,29 +219,29 @@ export function PlacementChatbot() {
             </div>
           </CardHeader>
 
-          {/* Messages Area */}
-          <CardContent className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50/10 no-scrollbar">
+          {/* Messages Area with Glassmorphism bubbles */}
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 bg-secondary/10 no-scrollbar">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`flex items-start gap-2 ${msg.sender === "user" ? "flex-row-reverse" : ""}`}
+                className={`flex items-start gap-2.5 ${msg.sender === "user" ? "flex-row-reverse" : ""}`}
               >
                 {msg.sender === "bot" && (
-                  <span className="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center dark:bg-blue-950/40 dark:text-blue-400 shrink-0 mt-0.5">
+                  <span className="h-7 w-7 rounded-xl bg-accent/10 text-accent-foreground flex items-center justify-center shrink-0 border border-accent/20">
                     <Bot className="h-3.5 w-3.5" />
                   </span>
                 )}
                 <div
-                  className={`p-2.5 rounded-2xl max-w-[82%] select-text ${
+                  className={`p-3 rounded-2xl max-w-[80%] select-text text-xs leading-relaxed shadow-2xs ${
                     msg.sender === "user"
-                      ? "bg-blue-600 text-white rounded-tr-none ml-auto text-[11px] leading-relaxed"
+                      ? "bg-primary text-primary-foreground rounded-tr-none ml-auto"
                       : msg.isError
-                      ? "bg-red-50 border border-red-200 text-red-700 rounded-tl-none dark:bg-red-950/20 dark:border-red-800 dark:text-red-400"
-                      : "bg-muted border border-border/40 text-foreground rounded-tl-none"
+                      ? "bg-rose-50 border border-rose-200 text-rose-800 rounded-tl-none"
+                      : "bg-card border border-border/70 text-foreground rounded-tl-none font-medium"
                   }`}
                 >
                   {msg.sender === "user" ? (
-                    <span className="text-[11px] leading-relaxed">{msg.text}</span>
+                    <span>{msg.text}</span>
                   ) : (
                     <MarkdownText text={msg.text} />
                   )}
@@ -252,12 +250,12 @@ export function PlacementChatbot() {
             ))}
 
             {loading && (
-              <div className="flex items-start gap-2 animate-pulse">
-                <span className="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center dark:bg-blue-950/40 dark:text-blue-400 shrink-0">
+              <div className="flex items-start gap-2.5 animate-pulse">
+                <span className="h-7 w-7 rounded-xl bg-accent/10 text-accent-foreground flex items-center justify-center shrink-0 border border-accent/20">
                   <Bot className="h-3.5 w-3.5" />
                 </span>
-                <div className="p-2.5 rounded-2xl bg-muted border border-border/40 text-muted-foreground rounded-tl-none flex items-center gap-1.5 text-[10px] font-medium">
-                  <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
+                <div className="p-3 rounded-2xl bg-card border border-border/70 text-muted-foreground rounded-tl-none flex items-center gap-1.5 text-[10px] font-medium shadow-2xs">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                   Scanning placement database...
                 </div>
               </div>
@@ -266,19 +264,19 @@ export function PlacementChatbot() {
           </CardContent>
 
           {/* Footer Input Area */}
-          <CardFooter className="p-3 border-t border-border shrink-0 bg-background flex gap-2">
+          <CardFooter className="p-3 border-t border-border/60 shrink-0 bg-background/95 backdrop-blur-xs flex gap-2">
             <Input
               placeholder="Ask about companies or hiring drives..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
               disabled={loading}
-              className="flex-1 h-9 text-[11px] border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500"
+              className="flex-1 h-9 text-[11px] border-border bg-card focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary shadow-2xs"
             />
             <Button
               onClick={handleSend}
               disabled={loading || !input.trim()}
-              className="h-9 px-3 bg-blue-600 hover:bg-blue-700 text-white shadow-sm shrink-0"
+              className="h-9 px-3.5 bg-primary hover:opacity-90 text-primary-foreground shadow-sm shrink-0 cursor-pointer"
               aria-label="Send query"
             >
               <Send className="h-3.5 w-3.5" />

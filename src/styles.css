@@ -67,36 +67,63 @@
 
 :root {
   --radius: 0.75rem;
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #F4F2E9;
+  --foreground: #182017;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #182017;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #0f172a;
-  --primary-foreground: #f8fafc;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #eff6ff;
-  --accent-foreground: #2563eb;
-  --destructive: #ef4444;
+  --popover-foreground: #182017;
+  --primary: #2d4a22;
+  --primary-foreground: #F4F2E9;
+  --secondary: #E8E6DA;
+  --secondary-foreground: #182017;
+  --muted: #E8E6DA;
+  --muted-foreground: #5a6358;
+  --accent: #df9f28;
+  --accent-foreground: #182017;
+  --destructive: #b45309;
   --destructive-foreground: #ffffff;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #2563eb;
+  --border: #D8D6C7;
+  --input: #D8D6C7;
+  --ring: #2d4a22;
 
-  --sidebar: #f8fafc;
-  --sidebar-foreground: #334155;
-  --sidebar-primary: #2563eb;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eff6ff;
-  --sidebar-accent-foreground: #2563eb;
-  --sidebar-border: #e5e7eb;
-  --sidebar-ring: #2563eb;
+  --sidebar: #FDFDFB;
+  --sidebar-foreground: #384334;
+  --sidebar-primary: #2d4a22;
+  --sidebar-primary-foreground: #FDFDFB;
+  --sidebar-accent: #E8E6DA;
+  --sidebar-accent-foreground: #2d4a22;
+  --sidebar-border: #D8D6C7;
+  --sidebar-ring: #2d4a22;
 }
 
 * { border-color: var(--border); }
 html, body { font-family: var(--font-body); background: var(--background); color: var(--foreground); }
 h1,h2,h3,h4,h5,h6 { font-family: var(--font-heading); }
+
+/* Film Grain Noise Effect */
+.noise-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Dark Mode Theme Variables */
+.dark {
+  --background: #09090b;
+  --foreground: #f8fafc;
+  --card: #0d111b;
+  --card-foreground: #f8fafc;
+  --popover: #0d111b;
+  --popover-foreground: #f8fafc;
+  --primary: #f8fafc;
+  --primary-foreground: #09090b;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #2563eb;
+  --accent-foreground: #ffffff;
+  --border: #1e293b;
+  --input: #0f172a;
+}
+
+

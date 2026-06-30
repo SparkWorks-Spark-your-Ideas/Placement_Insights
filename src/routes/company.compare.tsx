@@ -138,23 +138,23 @@ function CompareCompanies() {
 
   const activeBars = useMemo(() => {
     return [
-      { key: company1?.summary?.name, color: "#2563eb" },
-      { key: company2?.summary?.name, color: "#7c3aed" },
-      { key: company3?.summary?.name, color: "#16a34a" },
+      { key: company1?.summary?.name, color: "#2d4a22" }, // Moss green
+      { key: company2?.summary?.name, color: "#df9f28" }, // Cloud gold
+      { key: company3?.summary?.name, color: "#b45309" }, // Sunset orange
     ].filter(bar => bar.key);
   }, [company1, company2, company3]);
 
-  if (!isReady) {
+  if (!isReady || profile1.isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-16 text-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto" />
+      <div className="mx-auto max-w-7xl px-4 py-12 text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
         <p className="mt-4 text-sm font-medium text-muted-foreground animate-pulse">Loading comparison directory...</p>
       </div>
     );
   }
 
   const formatCellText = (val: unknown) => {
-    if (isNullish(val)) return <span className="text-muted-foreground italic text-xs">N/A</span>;
+    if (isNullish(val)) return <span className="text-muted-foreground italic text-[11px]">N/A</span>;
     return <span className="text-xs font-semibold text-foreground leading-relaxed">{String(val)}</span>;
   };
 
@@ -167,19 +167,19 @@ function CompareCompanies() {
     themeColor: string
   ) => {
     return (
-      <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col justify-between min-h-[170px]">
+      <div className="rounded-2xl border border-border/85 bg-card/75 backdrop-blur-md p-5 shadow-xs hover:shadow-sm transition-all duration-300 relative flex flex-col justify-between min-h-[170px] hover:border-primary/20">
         {/* Header Indicator */}
         <div className="absolute top-4 right-4 flex items-center gap-1.5">
           {company && (
             <button
               onClick={() => setId(null)}
-              className="p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition cursor-pointer"
+              className="p-1 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition cursor-pointer"
               title="Clear selection"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           )}
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${colorClass}`}>
+          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${colorClass}`}>
             Slot {num}
           </span>
         </div>
@@ -200,7 +200,7 @@ function CompareCompanies() {
                 <h2 className="font-heading text-sm font-bold text-foreground truncate mt-0.5" title={company.summary.name}>
                   {company.summary.name}
                 </h2>
-                <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
+                <span className="text-[10px] text-[#854d0e] font-bold block truncate mt-0.5">
                   {company.summary.category}
                 </span>
               </div>
@@ -212,7 +212,7 @@ function CompareCompanies() {
                   href={company.summary.website_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline"
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:underline"
                 >
                   <ExternalLink className="h-3 w-3" /> Website
                 </a>
@@ -231,7 +231,7 @@ function CompareCompanies() {
           <select
             value={company?.summary?.company_id ?? ""}
             onChange={(e) => setId(Number(e.target.value) || null)}
-            className="w-full rounded-lg border border-border bg-muted/30 px-2.5 py-1.5 text-[11px] font-semibold text-foreground outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer"
+            className="w-full rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition cursor-pointer shadow-2xs"
           >
             <option value="">-- Choose Company --</option>
             {candidates.map((c) => (
@@ -253,7 +253,7 @@ function CompareCompanies() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/50 pb-5">
         <div>
           <h1 className="font-heading text-xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <ArrowLeftRight className="h-5 w-5 text-blue-600" />
+            <ArrowLeftRight className="h-5 w-5 text-primary" />
             Company Comparison Engine
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
@@ -264,20 +264,98 @@ function CompareCompanies() {
 
       {/* 3-Column Slot Selectors */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {renderCompanyCard(1, company1, candidates1, setId1, "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400", "#2563eb")}
-        {renderCompanyCard(2, company2, candidates2, setId2, "bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400", "#7c3aed")}
-        {renderCompanyCard(3, company3, candidates3, setId3, "bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400", "#16a34a")}
+        {renderCompanyCard(1, company1, candidates1, setId1, "bg-emerald-50 text-emerald-800 border border-emerald-200/60", "#2d4a22")}
+        {renderCompanyCard(2, company2, candidates2, setId2, "bg-amber-50 text-amber-900 border border-amber-200/60", "#df9f28")}
+        {renderCompanyCard(3, company3, candidates3, setId3, "bg-orange-50 text-orange-900 border border-orange-200/60", "#b45309")}
       </div>
 
       {hasActiveComparison ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Column Left: Visual Charts */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
+          
+          {/* 1. Comparison Matrix Table (Full-Width Row) */}
+          <div className="rounded-2xl border border-primary/10 bg-card/75 backdrop-blur-md p-6 shadow-xs space-y-5 w-full">
+            <div className="flex items-center gap-2 border-b border-border/60 pb-3.5">
+              <FileText className="h-4.5 w-4.5 text-primary" />
+              <h3 className="font-heading text-sm font-bold text-foreground">Detailed Comparison Matrix</h3>
+            </div>
+
+            <div className="overflow-x-auto no-scrollbar">
+              <div className="min-w-[750px] divide-y divide-border/40">
+                {/* Header columns */}
+                <div className="grid grid-cols-4 gap-6 pb-4 items-center font-heading">
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    Metric / Aspect
+                  </div>
+
+                  <div className="flex items-center gap-2 min-w-0">
+                    {company1 ? (
+                      <>
+                        <CompanyLogo name={company1.summary.name} websiteUrl={company1.summary.website_url} fallbackUrl={company1.summary.logo_url} size={28} />
+                        <span className="text-xs font-bold text-foreground truncate">{company1.summary.name}</span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic">Slot 1 Empty</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 min-w-0">
+                    {company2 ? (
+                      <>
+                        <CompanyLogo name={company2.summary.name} websiteUrl={company2.summary.website_url} fallbackUrl={company2.summary.logo_url} size={28} />
+                        <span className="text-xs font-bold text-foreground truncate">{company2.summary.name}</span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic">Slot 2 Empty</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 min-w-0">
+                    {company3 ? (
+                      <>
+                        <CompanyLogo name={company3.summary.name} websiteUrl={company3.summary.website_url} fallbackUrl={company3.summary.logo_url} size={28} />
+                        <span className="text-xs font-bold text-foreground truncate">{company3.summary.name}</span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic">Slot 3 Empty</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Grid features */}
+                {[
+                  { label: "Headquarters", val1: company1?.summary?.headquarters_address, val2: company2?.summary?.headquarters_address, val3: company3?.summary?.headquarters_address },
+                  { label: "Employee Scale", val1: company1?.summary?.employee_size, val2: company2?.summary?.employee_size, val3: company3?.summary?.employee_size },
+                  { label: "Annual Revenue", val1: company1?.profile?.annual_revenue, val2: company2?.profile?.annual_revenue, val3: company3?.profile?.annual_revenue },
+                  { label: "YoY Growth", val1: company1?.summary?.yoy_growth_rate, val2: company2?.summary?.yoy_growth_rate, val3: company3?.summary?.yoy_growth_rate },
+                  { label: "Remote Policy", val1: company1?.profile?.remote_policy_details, val2: company2?.profile?.remote_policy_details, val3: company3?.profile?.remote_policy_details },
+                  { 
+                    label: "Burnout & Hours", 
+                    val1: company1 ? `${company1.profile.burnout_risk} (${company1.profile.typical_hours})` : null, 
+                    val2: company2 ? `${company2.profile.burnout_risk} (${company2.profile.typical_hours})` : null, 
+                    val3: company3 ? `${company3.profile.burnout_risk} (${company3.profile.typical_hours})` : null 
+                  },
+                  { label: "Work Culture", val1: company1?.profile?.work_culture_summary, val2: company2?.profile?.work_culture_summary, val3: company3?.profile?.work_culture_summary },
+                ].map((row, idx) => (
+                  <div key={idx} className="grid grid-cols-4 gap-6 py-3.5 items-start text-xs">
+                    <div className="font-bold text-muted-foreground uppercase text-[9px] tracking-wider pt-0.5">
+                      {row.label}
+                    </div>
+                    <div className="pr-2">{formatCellText(row.val1)}</div>
+                    <div className="pr-2">{formatCellText(row.val2)}</div>
+                    <div className="pr-2">{formatCellText(row.val3)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Visual Charts & Venn (Stacked side-by-side) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Required Skills benchmark chart */}
-            <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm space-y-4">
+            <div className="rounded-2xl border border-primary/10 bg-card/75 backdrop-blur-md p-5 shadow-xs space-y-4">
               <div className="flex items-center gap-2 border-b border-border/50 pb-3">
-                <BarChart3 className="h-4.5 w-4.5 text-blue-500" />
+                <BarChart3 className="h-4.5 w-4.5 text-primary" />
                 <h3 className="font-heading text-xs font-bold text-foreground">Required Skill Thresholds</h3>
               </div>
               
@@ -325,22 +403,22 @@ function CompareCompanies() {
             </div>
 
             {/* Tech Stack venn breakdown */}
-            <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm space-y-4">
+            <div className="rounded-2xl border border-primary/10 bg-card/75 backdrop-blur-md p-5 shadow-xs space-y-4">
               <div className="flex items-center gap-2 border-b border-border/50 pb-3">
-                <Network className="h-4.5 w-4.5 text-blue-500" />
+                <Network className="h-4.5 w-4.5 text-primary" />
                 <h3 className="font-heading text-xs font-bold text-foreground">Technology Intersection Analysis</h3>
               </div>
 
               <div className="space-y-4">
                 {/* Shared Tech Stack */}
                 {techComparison.common.length > 0 && (
-                  <div className="space-y-2 p-3.5 bg-blue-50/10 border border-blue-100/10 rounded-xl">
-                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 block tracking-wide uppercase">
+                  <div className="space-y-2 p-3.5 bg-primary/5 border border-primary/10 rounded-xl">
+                    <span className="text-[10px] font-bold text-primary block tracking-wide uppercase">
                       Shared Stack ({techComparison.common.length})
                     </span>
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {techComparison.common.map((tech, idx) => (
-                        <span key={idx} className="rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-400 border border-blue-200/20 px-2 py-0.5 text-[9px] font-bold">
+                        <span key={idx} className="rounded-full bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 text-[9px] font-bold">
                           {tech}
                         </span>
                       ))}
@@ -349,21 +427,21 @@ function CompareCompanies() {
                 )}
 
                 {/* Unique Tech Lists */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {techComparison.unique.map((item, idx) => {
                     const colors = [
-                      "border-blue-100 text-blue-800 dark:text-blue-400",
-                      "border-purple-100 text-purple-800 dark:text-purple-400",
-                      "border-green-100 text-green-800 dark:text-green-400"
+                      "border-emerald-100 text-emerald-800 bg-emerald-50/40",
+                      "border-amber-100 text-amber-800 bg-amber-50/40",
+                      "border-orange-100 text-orange-850 bg-orange-50/40"
                     ];
                     return (
-                      <div key={idx} className="space-y-2 p-3 bg-muted/40 border border-border/50 rounded-xl">
-                        <span className="text-[9px] font-bold text-muted-foreground block uppercase tracking-wide truncate">
-                          Unique to {item.companyName}
+                      <div key={idx} className="space-y-2 p-3 bg-secondary/20 border border-border/40 rounded-xl min-h-[110px]">
+                        <span className="text-[9px] font-extrabold text-muted-foreground block uppercase tracking-wide truncate border-b border-border/30 pb-1">
+                          Unique to {item.companyName.split(" ")[0]}
                         </span>
-                        <div className="flex flex-wrap gap-1 pt-1">
+                        <div className="flex flex-wrap gap-1 pt-1.5">
                           {item.techs.length > 0 ? item.techs.map((tech, sIdx) => (
-                            <span key={sIdx} className={`rounded-full bg-card border px-1.5 py-0.5 text-[9px] font-semibold ${colors[idx % 3]}`}>
+                            <span key={sIdx} className={`rounded-full border px-1.5 py-0.5 text-[8.5px] font-bold ${colors[idx % 3]}`}>
                               {tech}
                             </span>
                           )) : (
@@ -377,151 +455,6 @@ function CompareCompanies() {
               </div>
             </div>
 
-          </div>
-
-          {/* Right Column: Key parameter list */}
-          <div className="space-y-6">
-            <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm space-y-4">
-              <div className="flex items-center gap-2 border-b border-border/50 pb-3">
-                <FileText className="h-4.5 w-4.5 text-blue-500" />
-                <h3 className="font-heading text-xs font-bold text-foreground">Detailed Parameter Grid</h3>
-              </div>
-
-              <div className="space-y-4 divide-y divide-border/40">
-                {/* Headquarters */}
-                <div className="pt-2 first:pt-0 space-y-1.5">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Headquarters</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 1</span>
-                      {formatCellText(company1?.summary?.headquarters_address)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 2</span>
-                      {formatCellText(company2?.summary?.headquarters_address)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 3</span>
-                      {formatCellText(company3?.summary?.headquarters_address)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Scale Size */}
-                <div className="pt-3 space-y-1.5">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Employee Scale</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 1</span>
-                      {formatCellText(company1?.summary?.employee_size)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 2</span>
-                      {formatCellText(company2?.summary?.employee_size)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 3</span>
-                      {formatCellText(company3?.summary?.employee_size)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Annual Revenue */}
-                <div className="pt-3 space-y-1.5">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Annual Revenue</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 1</span>
-                      {formatCellText(company1?.profile?.annual_revenue)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 2</span>
-                      {formatCellText(company2?.profile?.annual_revenue)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 3</span>
-                      {formatCellText(company3?.profile?.annual_revenue)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* YoY Growth */}
-                <div className="pt-3 space-y-1.5">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">YoY Growth Rate</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 1</span>
-                      {formatCellText(company1?.summary?.yoy_growth_rate)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 2</span>
-                      {formatCellText(company2?.summary?.yoy_growth_rate)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 3</span>
-                      {formatCellText(company3?.summary?.yoy_growth_rate)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Remote Policy */}
-                <div className="pt-3 space-y-1.5">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Remote Policy</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 1</span>
-                      {formatCellText(company1?.profile?.remote_policy_details)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 2</span>
-                      {formatCellText(company2?.profile?.remote_policy_details)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 3</span>
-                      {formatCellText(company3?.profile?.remote_policy_details)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Hours & Burnout */}
-                <div className="pt-3 space-y-1.5">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Burnout Risk &amp; Hours</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 1</span>
-                      {formatCellText(company1 ? `${company1.profile.burnout_risk} (${company1.profile.typical_hours})` : null)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 2</span>
-                      {formatCellText(company2 ? `${company2.profile.burnout_risk} (${company2.profile.typical_hours})` : null)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 3</span>
-                      {formatCellText(company3 ? `${company3.profile.burnout_risk} (${company3.profile.typical_hours})` : null)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Culture Summary */}
-                <div className="pt-3 space-y-1.5">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Culture Summary</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 1</span>
-                      {formatCellText(company1?.profile?.work_culture_summary)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 2</span>
-                      {formatCellText(company2?.profile?.work_culture_summary)}
-                    </div>
-                    <div className="p-2 rounded bg-muted/40 text-center min-w-0">
-                      <span className="text-[9px] text-muted-foreground block truncate">Slot 3</span>
-                      {formatCellText(company3?.profile?.work_culture_summary)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       ) : (

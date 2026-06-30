@@ -6,10 +6,10 @@ import { useCompany } from "@/context/CompanyContext";
 import { isNullish, type CompanySummary } from "@/lib/companyData";
 
 const TYPE_COLORS: Record<string, string> = {
-  "super dream": "bg-[#7c3aed] text-white",
-  dream: "bg-[#2563eb] text-white",
-  standard: "bg-[#16a34a] text-white",
-  regular: "bg-[#d97706] text-white",
+  "super dream": "bg-amber-100/80 text-amber-900 border border-amber-200/80",
+  dream: "bg-emerald-100/80 text-emerald-900 border border-emerald-200/80",
+  standard: "bg-lime-100/80 text-lime-900 border border-lime-200/80",
+  regular: "bg-stone-200/70 text-stone-800 border border-stone-300/70",
 };
 
 function typeClass(t: string) {
@@ -39,11 +39,11 @@ export const CompanyCard = memo(function CompanyCard({ summary }: Props) {
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex flex-col gap-3 rounded-xl border border-border bg-card p-5 text-left transition hover:border-[#2563eb]/40 hover:shadow-md"
+      className="group relative flex flex-col gap-3 rounded-xl border border-border bg-card p-5 text-left transition hover:border-primary/40 hover:shadow-md shadow-sm"
     >
       <div className="flex items-start justify-between gap-3">
         <CompanyLogo name={summary.name} websiteUrl={summary.website_url} fallbackUrl={summary.logo_url} size={48} />
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${typeClass(summary.company_type)}`}>
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${typeClass(summary.company_type)}`}>
           {show(summary.company_type)}
         </span>
       </div>
@@ -59,7 +59,7 @@ export const CompanyCard = memo(function CompanyCard({ summary }: Props) {
           <span className={isNegative ? "text-[#ef4444]" : ""}>{show(growth)}</span>
         </li>
       </ul>
-      <ArrowRight className="absolute bottom-4 right-4 h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-[#2563eb]" />
+      <ArrowRight className="absolute bottom-4 right-4 h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
     </button>
   );
 });

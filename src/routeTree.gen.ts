@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HiringDrivesRouteImport } from './routes/hiring-drives'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as CompanyRouteImport } from './routes/company'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
@@ -34,6 +35,11 @@ const LoginRoute = LoginRouteImport.update({
 const HiringDrivesRoute = HiringDrivesRouteImport.update({
   id: '/hiring-drives',
   path: '/hiring-drives',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompanyRoute = CompanyRouteImport.update({
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/company': typeof CompanyRouteWithChildren
+  '/demo': typeof DemoRoute
   '/hiring-drives': typeof HiringDrivesRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/demo': typeof DemoRoute
   '/hiring-drives': typeof HiringDrivesRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/company': typeof CompanyRouteWithChildren
+  '/demo': typeof DemoRoute
   '/hiring-drives': typeof HiringDrivesRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/company'
+    | '/demo'
     | '/hiring-drives'
     | '/login'
     | '/signup'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/analytics'
+    | '/demo'
     | '/hiring-drives'
     | '/login'
     | '/signup'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/company'
+    | '/demo'
     | '/hiring-drives'
     | '/login'
     | '/signup'
@@ -161,6 +173,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   CompanyRoute: typeof CompanyRouteWithChildren
+  DemoRoute: typeof DemoRoute
   HiringDrivesRoute: typeof HiringDrivesRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
@@ -187,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/hiring-drives'
       fullPath: '/hiring-drives'
       preLoaderRoute: typeof HiringDrivesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/company': {
@@ -271,6 +291,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   CompanyRoute: CompanyRouteWithChildren,
+  DemoRoute: DemoRoute,
   HiringDrivesRoute: HiringDrivesRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,

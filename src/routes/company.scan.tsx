@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { FileSearch, Sparkles, FileText, CheckCircle2, AlertCircle, RefreshCw, Check, X } from "lucide-react";
+import { FileSearch, Sparkles, FileText, CheckCircle2, AlertCircle, RefreshCw, Check, X, Upload } from "lucide-react";
 import { useCompany } from "@/context/CompanyContext";
 import { useCompanySkills } from "@/lib/companyApi";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -28,8 +28,8 @@ function ResumeScanner() {
 
   if (!isReady || skillsQuery.isLoading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8 text-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#2563eb] border-t-transparent mx-auto" />
+      <div className="mx-auto max-w-4xl px-4 py-12 text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
         <p className="mt-2 text-sm text-muted-foreground">Loading company requirements...</p>
       </div>
     );
@@ -117,7 +117,7 @@ function ResumeScanner() {
       } else {
         missing.push(name);
         recommendations.push(
-          `Add projects or bullet points mentioning details of "${name}" (e.g. keywords: ${keywords.slice(0, 3).join(", ")}) to match the required Level ${skill.required_level} standard.`
+          `Include details of "${name}" (such as: ${keywords.slice(0, 3).join(", ")}) to align with the required Level ${skill.required_level} standards.`
         );
       }
     }
@@ -147,64 +147,72 @@ function ResumeScanner() {
     toast.success("Resume analysis complete!");
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-500 border-green-500";
-    if (score >= 50) return "text-yellow-500 border-yellow-500";
-    return "text-red-500 border-red-500";
+  const getScoreStyles = (score: number) => {
+    if (score >= 80) return { text: "text-emerald-700", border: "border-emerald-500", bg: "bg-emerald-50" };
+    if (score >= 50) return { text: "text-amber-700", border: "border-amber-500", bg: "bg-amber-50" };
+    return { text: "text-rose-700", border: "border-rose-500", bg: "bg-rose-50" };
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-      <div className="mb-6 flex items-center gap-3 border-b border-border pb-4">
-        <CompanyLogo name={selected?.name || ""} websiteUrl={selected?.website_url} fallbackUrl={selected?.logo_url} size={44} />
-        <div>
-          <h1 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-[#2563eb]" /> Resume Scanner &amp; Matcher
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Optimize your resume keyword alignment for <span className="font-semibold text-foreground">{selected?.name}</span>.
-          </p>
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 space-y-6">
+      
+      {/* Header Profile Info */}
+      <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
+        <div className="flex items-center gap-3">
+          <CompanyLogo name={selected?.name || ""} websiteUrl={selected?.website_url} fallbackUrl={selected?.logo_url} size={44} />
+          <div>
+            <h1 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-accent" /> Resume Scanner &amp; Matcher
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              Optimize your resume keyword alignment for <span className="font-semibold text-foreground">{selected?.name}</span>.
+            </p>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Input text */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <div className="flex justify-between items-center mb-3">
-              <label htmlFor="resume-textarea" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <FileText className="h-4 w-4 text-[#2563eb]" /> Paste Resume Text
-              </label>
-              <div className="relative">
+        {/* Left Column: Input Form */}
+        <div className="lg:col-span-2 space-y-5">
+          <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-4">
+            
+            {/* Custom Drag & Drop File Upload Area */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Upload className="h-4 w-4 text-primary" /> Drag or Upload Resume
+              </span>
+              <div className="relative border-2 border-dashed border-border hover:border-primary/40 rounded-xl p-5 text-center transition bg-secondary/20 flex flex-col items-center justify-center group">
                 <input
                   type="file"
                   accept=".txt"
                   id="file-upload"
                   onChange={handleFileUpload}
-                  className="hidden"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
-                <label
-                  htmlFor="file-upload"
-                  className="inline-flex cursor-pointer items-center justify-center rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
-                >
-                  Upload .txt file
-                </label>
+                <FileText className="h-8 w-8 text-muted-foreground group-hover:scale-105 transition mb-2" />
+                <p className="text-xs font-semibold text-foreground">Upload plain text (.txt) file</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Click here or drag file to parse contents</p>
               </div>
             </div>
 
-            <textarea
-              id="resume-textarea"
-              rows={12}
-              value={resumeText}
-              onChange={(e) => setResumeText(e.target.value)}
-              placeholder="Paste the full text of your resume here (Ctrl+V)..."
-              className="w-full rounded-lg border border-border bg-background p-3 text-xs outline-none focus:border-[#2563eb] transition font-sans resize-none"
-            />
+            <div className="space-y-2">
+              <label htmlFor="resume-textarea" className="text-xs font-bold text-foreground flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" /> Paste Resume Text
+              </label>
+              <textarea
+                id="resume-textarea"
+                rows={10}
+                value={resumeText}
+                onChange={(e) => setResumeText(e.target.value)}
+                placeholder="Paste the full text of your resume here (Ctrl+V)..."
+                className="w-full rounded-lg border border-border bg-card p-4 text-xs outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition font-mono resize-none shadow-2xs"
+              />
+            </div>
 
             <button
               onClick={runAnalysis}
               disabled={scanning}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#2563eb] py-2.5 text-xs font-semibold text-white transition hover:bg-blue-500 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-xs font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50 cursor-pointer shadow-sm"
             >
               {scanning ? (
                 <>
@@ -224,65 +232,72 @@ function ResumeScanner() {
         {/* Right Column: ATS Report Output */}
         <div className="space-y-4">
           {result ? (
-            <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-5">
-              <div className="text-center">
-                <h3 className="font-heading font-bold text-sm text-foreground mb-3">ATS Compatibility Rating</h3>
-                <div className={`inline-flex items-center justify-center rounded-full border-4 w-24 h-24 font-heading text-3xl font-extrabold ${getScoreColor(result.score)}`}>
+            <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-5">
+              <div className="text-center space-y-2">
+                <h3 className="font-heading font-bold text-sm text-foreground">ATS Compatibility Rating</h3>
+                <div className={`inline-flex items-center justify-center rounded-full border-4 w-24 h-24 font-heading text-3xl font-extrabold shadow-2xs ${getScoreStyles(result.score).text} ${getScoreStyles(result.score).border} ${getScoreStyles(result.score).bg}`}>
                   {result.score}%
                 </div>
               </div>
 
               {/* Matched vs Missing */}
-              <div className="space-y-3">
-                <div className="text-xs">
-                  <span className="font-bold text-foreground block mb-1">Matched Skills ({result.matched.length})</span>
+              <div className="space-y-4 pt-2 border-t border-border/60">
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-foreground block">
+                    Matched Skills ({result.matched.length})
+                  </span>
                   {result.matched.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {result.matched.map((m) => (
-                        <span key={m} className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-[9px] font-semibold text-green-700 dark:bg-green-950/20 dark:border-green-900/40">
+                        <span key={m} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 text-[9px] font-bold text-emerald-800">
                           <Check className="h-2.5 w-2.5" /> {m}
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <span className="text-[10px] text-muted-foreground">No matches found. Try pasting your full technical resume.</span>
+                    <span className="text-[10px] text-muted-foreground italic">No matches found. Try pasting your full technical resume.</span>
                   )}
                 </div>
 
-                <div className="text-xs">
-                  <span className="font-bold text-foreground block mb-1">Missing Skills ({result.missing.length})</span>
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-foreground block">
+                    Missing Skills ({result.missing.length})
+                  </span>
                   {result.missing.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {result.missing.map((m) => (
-                        <span key={m} className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2 py-0.5 text-[9px] font-semibold text-red-700 dark:bg-red-950/20 dark:border-red-900/40">
+                        <span key={m} className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200/60 px-2.5 py-0.5 text-[9px] font-bold text-rose-800">
                           <X className="h-2.5 w-2.5" /> {m}
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <span className="text-[10px] text-green-600 font-semibold">100% matched! Excellent.</span>
+                    <span className="text-[10px] text-emerald-700 font-bold">100% matched! Excellent.</span>
                   )}
                 </div>
               </div>
 
               {/* Actionable Recommendations */}
-              <div className="border-t border-border pt-4">
-                <h4 className="font-heading font-semibold text-xs text-foreground flex items-center gap-1 mb-2">
-                  <AlertCircle className="h-4 w-4 text-[#2563eb]" /> Recommendations
+              <div className="border-t border-border/60 pt-4">
+                <h4 className="font-heading font-bold text-xs text-foreground flex items-center gap-1 mb-3">
+                  <AlertCircle className="h-4 w-4 text-primary" /> Actionable Advice
                 </h4>
-                <ul className="space-y-2 text-[10px] text-muted-foreground list-disc pl-4 leading-normal">
+                <ul className="space-y-2 text-[10px] text-muted-foreground pl-1.5 leading-normal">
                   {result.recommendations.map((rec, index) => (
-                    <li key={index}>{rec}</li>
+                    <li key={index} className="flex gap-2 items-start bg-secondary/25 border border-border/30 rounded-lg p-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
+                      <span>{rec}</span>
+                    </li>
                   ))}
                 </ul>
               </div>
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center flex flex-col items-center justify-center py-24 text-muted-foreground">
+            <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center flex flex-col items-center justify-center py-20 text-muted-foreground">
               <FileSearch className="h-10 w-10 text-muted-foreground opacity-30 mb-3" />
               <h3 className="font-heading font-semibold text-xs text-foreground">Awaiting Scan</h3>
               <p className="text-[10px] mt-1 max-w-[200px] leading-relaxed">
-                Paste your resume text on the left and click analyze to see your keyword compatibility score.
+                Paste your resume text or upload a plain text file on the left and click analyze to see your keyword compatibility score.
               </p>
             </div>
           )}
