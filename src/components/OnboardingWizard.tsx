@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Award, Briefcase, GraduationCap, ArrowRight, ArrowLeft, Check, Sparkles, X, Brain, Cpu, Pocket } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { MercuryBackground } from "@/components/ui/mercury-background";
 
 const DEFAULT_ROLES = [
   "Associate Software Engineer (ASE)",
@@ -217,130 +218,280 @@ export function OnboardingWizard({ isDismissible = false, onClose }: OnboardingW
   const softGroup = skillsMaster ? skillsMaster.slice(8, 12) : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm px-4 py-6 overflow-y-auto">
-      <Card className="w-full max-w-2xl border-none shadow-2xl bg-card text-card-foreground overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
-        
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050505] px-4 py-6 overflow-y-auto font-sans text-white">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;800&family=Space+Mono&display=swap');
+
+        .onboarding-wrapper {
+          font-family: 'Inter', sans-serif;
+          color: #ffffff;
+        }
+
+        .onboarding-mono {
+          font-family: 'Space Mono', monospace !important;
+        }
+
+        .onboarding-card {
+          position: relative;
+          z-index: 10;
+          width: 100%;
+          max-width: 640px;
+          background: #050505;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 40px;
+          border-radius: 0;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .onboarding-header h1 {
+          font-family: 'Inter', sans-serif;
+          font-weight: 800;
+          font-size: 3rem;
+          line-height: 0.9;
+          letter-spacing: -2px;
+          margin-top: 0;
+          margin-bottom: 20px;
+        }
+
+        /* Form Elements */
+        .onboarding-group {
+          position: relative;
+          margin-bottom: 25px;
+          transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+
+        .onboarding-group:focus-within {
+          transform: translateX(10px);
+        }
+
+        .onboarding-group label {
+          display: block;
+          font-family: 'Space Mono', monospace !important;
+          font-size: 11px;
+          color: rgba(255, 255, 255, 0.5);
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .onboarding-group input, 
+        .onboarding-group select,
+        .onboarding-group select option {
+          width: 100%;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          color: #ffffff;
+          padding: 10px 0;
+          font-size: 16px;
+          outline: none;
+          transition: border-color 0.4s;
+          font-family: 'Space Mono', monospace !important;
+        }
+
+        .onboarding-glow {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 0%;
+          height: 2px;
+          background: #e0e0e0;
+          transition: width 0.6s cubic-bezier(0.2, 1, 0.3, 1);
+          box-shadow: 0 0 15px #e0e0e0;
+        }
+
+        .onboarding-group input:focus + .onboarding-glow,
+        .onboarding-group select:focus + .onboarding-glow {
+          width: 100%;
+        }
+
+        /* White Pill Button */
+        .onboarding-btn {
+          background: #ffffff;
+          color: #000000;
+          border: none;
+          padding: 15px 30px;
+          font-size: 12px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          cursor: pointer;
+          transition: letter-spacing 0.3s, transform 0.2s;
+          border-radius: 9999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .onboarding-btn:hover {
+          letter-spacing: 3px;
+        }
+
+        .onboarding-btn-outline {
+          background: transparent;
+          color: rgba(255, 255, 255, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          padding: 15px 30px;
+          font-size: 12px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          cursor: pointer;
+          transition: color 0.3s, border-color 0.3s;
+          border-radius: 9999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .onboarding-btn-outline:hover {
+          color: #ffffff;
+          border-color: #ffffff;
+        }
+
+        .onboarding-skill-card {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          padding: 15px;
+          border-radius: 0;
+          position: relative;
+        }
+
+        .onboarding-progress-bar {
+          height: 1px;
+          background: rgba(255, 255, 255, 0.1);
+          width: 100%;
+        }
+
+        .onboarding-progress-fill {
+          height: 1px;
+          background: #ffffff;
+          transition: width 0.3s ease;
+        }
+      `}</style>
+
+      {/* Dynamic Liquid gooey physics background */}
+      <MercuryBackground opacity={0.65} />
+
+      <div className="onboarding-card onboarding-wrapper">
         {/* Dismiss Option */}
         {isDismissible && onClose && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition duration-150"
+            className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition duration-150 cursor-pointer"
           >
-            <X className="h-4.5 w-4.5" />
+            <X className="h-4 w-4" />
           </button>
         )}
 
-        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600" />
-        
-        <CardHeader className="space-y-1.5 pb-5">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center p-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
-              <Sparkles className="h-5 w-5" />
-            </span>
-            <div>
-              <CardTitle className="font-heading text-lg font-bold text-foreground">
-                KITS Placement Onboarding
-              </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                Configure your career targets and self-assessed skill levels.
-              </CardDescription>
+        <div className="onboarding-header">
+          <span className="onboarding-mono text-[9px] tracking-[4px] uppercase opacity-50 block mb-2">PLACEMENT PORTAL: 0X2026</span>
+          <h1>KITS ONBOARDING</h1>
+          <p className="onboarding-mono text-[11px] opacity-40 uppercase tracking-wider">
+            Configure expectations and skill vectors
+          </p>
+        </div>
+
+        {/* Progress Indicators */}
+        <div className="flex gap-2 my-6">
+          <div className="flex-1 space-y-1">
+            <span className="onboarding-mono text-[8px] opacity-30 uppercase tracking-widest block">Expectations</span>
+            <div className="onboarding-progress-bar">
+              <div className="onboarding-progress-fill" style={{ width: step >= 1 ? "100%" : "0%" }} />
             </div>
           </div>
-          
-          {/* Progress Indicators */}
-          <div className="flex gap-1.5 pt-3">
-            <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step >= 1 ? "bg-blue-600" : "bg-muted"}`} />
-            <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step >= 2 ? "bg-indigo-600" : "bg-muted"}`} />
-            <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step >= 3 ? "bg-indigo-600" : "bg-muted"}`} />
-            <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step >= 4 ? "bg-purple-600" : "bg-muted"}`} />
+          <div className="flex-1 space-y-1">
+            <span className="onboarding-mono text-[8px] opacity-30 uppercase tracking-widest block">Algorithms</span>
+            <div className="onboarding-progress-bar">
+              <div className="onboarding-progress-fill" style={{ width: step >= 2 ? "100%" : "0%" }} />
+            </div>
           </div>
-        </CardHeader>
+          <div className="flex-1 space-y-1">
+            <span className="onboarding-mono text-[8px] opacity-30 uppercase tracking-widest block">Systems</span>
+            <div className="onboarding-progress-bar">
+              <div className="onboarding-progress-fill" style={{ width: step >= 3 ? "100%" : "0%" }} />
+            </div>
+          </div>
+          <div className="flex-1 space-y-1">
+            <span className="onboarding-mono text-[8px] opacity-30 uppercase tracking-widest block">Soft Skills</span>
+            <div className="onboarding-progress-bar">
+              <div className="onboarding-progress-fill" style={{ width: step >= 4 ? "100%" : "0%" }} />
+            </div>
+          </div>
+        </div>
 
-        <CardContent className="space-y-5 max-h-[62vh] overflow-y-auto pr-1 pb-4">
+        <div className="space-y-6 max-h-[50vh] overflow-y-auto pr-1 pb-4 no-scrollbar">
           
           {/* STEP 1: Expectations */}
           {step === 1 && (
             <div className="space-y-5 animate-in fade-in duration-200">
-              <div className="space-y-1">
-                <h3 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-blue-500" />
-                  Step 1: Placement Expectations
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Define your targeted package and role settings.
-                </p>
-              </div>
+              <div className="onboarding-group">
+                <label>Target Job Profile / Role</label>
+                <select 
+                  value={targetRole} 
+                  onChange={(e) => handleRoleChange(e.target.value)}
+                  className="cursor-pointer"
+                >
+                  <option value="" className="bg-[#050505] text-white">SELECT TARGET ROLE...</option>
+                  {uniqueRoles.map((role) => (
+                    <option key={role} value={role} className="bg-[#050505] text-white">{role.toUpperCase()}</option>
+                  ))}
+                  <option value="other" className="bg-[#050505] text-white">OTHER / CUSTOM ROLE...</option>
+                </select>
+                <div className="onboarding-glow"></div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="role-select" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Target Job Profile / Role
-                  </Label>
-                  <Select value={targetRole} onValueChange={handleRoleChange}>
-                    <SelectTrigger id="role-select" className="h-10 text-xs bg-muted/20 border-border">
-                      <SelectValue placeholder="Select target role..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {uniqueRoles.map((role) => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                      ))}
-                      <SelectItem value="other">Other / Custom Role...</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {isCustomRole && (
-                    <Input
-                      placeholder="Type your custom target job role..."
+                {isCustomRole && (
+                  <div className="onboarding-group mt-4">
+                    <label>Specify Custom Role</label>
+                    <input
+                      placeholder="CUSTOM PROFILE..."
                       value={customRole}
                       onChange={(e) => setCustomRole(e.target.value)}
-                      className="h-10 text-xs border-border bg-muted/20 mt-2 animate-in slide-in-from-top-1.5 duration-150"
+                      className="animate-in slide-in-from-top-1.5 duration-150"
                     />
-                  )}
+                    <div className="onboarding-glow"></div>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="onboarding-group">
+                  <label>Graduation Batch Year</label>
+                  <select 
+                    value={String(batchYear)} 
+                    onChange={(e) => setBatchYear(Number(e.target.value))}
+                    className="cursor-pointer"
+                  >
+                    <option value="2024" className="bg-[#050505] text-white">BATCH OF 2024</option>
+                    <option value="2025" className="bg-[#050505] text-white">BATCH OF 2025</option>
+                    <option value="2026" className="bg-[#050505] text-white">BATCH OF 2026</option>
+                    <option value="2027" className="bg-[#050505] text-white">BATCH OF 2027</option>
+                    <option value="2028" className="bg-[#050505] text-white">BATCH OF 2028</option>
+                  </select>
+                  <div className="onboarding-glow"></div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div className="space-y-2">
-                    <Label htmlFor="batch" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Graduation Batch Year
-                    </Label>
-                    <Select value={String(batchYear)} onValueChange={(val) => setBatchYear(Number(val))}>
-                      <SelectTrigger id="batch" className="h-10 text-xs bg-muted/20 border-border">
-                        <SelectValue placeholder="Select graduation batch" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="2024">Batch of 2024</SelectItem>
-                        <SelectItem value="2025">Batch of 2025</SelectItem>
-                        <SelectItem value="2026">Batch of 2026</SelectItem>
-                        <SelectItem value="2027">Batch of 2027</SelectItem>
-                        <SelectItem value="2028">Batch of 2028</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center onboarding-mono text-[10px] tracking-wide">
+                    <span className="opacity-50">TARGET PACKAGE (LPA)</span>
+                    <span className="text-white font-bold">{packageLpa} LPA</span>
                   </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Target Package (LPA)
-                      </Label>
-                      <span className={`text-[10px] font-bold border rounded-full px-2 py-0.5 transition ${currentTier.color}`}>
-                        {packageLpa} LPA · {currentTier.name}
-                      </span>
-                    </div>
-                    <div className="pt-2">
-                      <Slider
-                        min={3}
-                        max={40}
-                        step={0.5}
-                        value={[packageLpa]}
-                        onValueChange={(val) => setPackageLpa(val[0])}
-                        className="py-1 cursor-pointer"
-                      />
-                      <div className="flex justify-between text-[9px] text-muted-foreground mt-1 font-medium">
-                        <span>3.0 LPA</span>
-                        <span>15.0 LPA</span>
-                        <span>30.0 LPA</span>
-                        <span>40.0 LPA</span>
-                      </div>
+                  <div className="pt-1">
+                    <Slider
+                      min={3}
+                      max={40}
+                      step={0.5}
+                      value={[packageLpa]}
+                      onValueChange={(val) => setPackageLpa(val[0])}
+                      className="cursor-pointer"
+                    />
+                    <div className="flex justify-between onboarding-mono text-[9px] opacity-40 mt-1">
+                      <span>3.0 LPA</span>
+                      <span>15.0 LPA</span>
+                      <span>30.0 LPA</span>
+                      <span>40.0 LPA</span>
                     </div>
                   </div>
                 </div>
@@ -350,34 +501,24 @@ export function OnboardingWizard({ isDismissible = false, onClose }: OnboardingW
 
           {/* STEP 2: Algorithms */}
           {step === 2 && (
-            <div className="space-y-5 animate-in fade-in duration-200">
-              <div className="space-y-1">
-                <h3 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Brain className="h-4 w-4 text-indigo-500" />
-                  Step 2: Algorithms &amp; Databases
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Rate your foundations in problem solving and data management.
-                </p>
-              </div>
-
+            <div className="space-y-4 animate-in fade-in duration-200">
               {isSkillsMasterLoading ? (
-                <div className="h-32 animate-pulse bg-muted/20 border border-border/40 rounded-xl" />
+                <div className="h-32 animate-pulse bg-white/5 border border-white/10" />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {algoGroup.map((skill) => (
-                    <div key={skill.skill_set_name} className="p-3.5 rounded-xl bg-muted/20 border border-border/40 space-y-2.5">
+                    <div key={skill.skill_set_name} className="onboarding-skill-card space-y-2">
                       <div className="flex justify-between items-start">
-                        <div className="min-w-0">
-                          <span className="text-xs font-bold text-foreground block truncate">
+                        <div className="min-w-0 pr-2">
+                          <span className="onboarding-mono text-xs font-bold text-white block truncate uppercase tracking-wider">
                             {skill.skill_set_name}
                           </span>
-                          <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
+                          <span className="onboarding-mono text-[9px] opacity-40 block truncate mt-0.5 uppercase tracking-wide">
                             {getSkillDesc(skill.skill_set_name)}
                           </span>
                         </div>
-                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-1.5 py-0.5 dark:bg-indigo-950/20 dark:border-indigo-900/50 shrink-0">
-                          Lvl {skills[skill.skill_set_name] ?? 5}
+                        <span className="onboarding-mono text-[9px] font-bold text-white border border-white/20 px-1.5 py-0.5 shrink-0">
+                          LVL {skills[skill.skill_set_name] ?? 5}
                         </span>
                       </div>
                       <Slider
@@ -397,34 +538,24 @@ export function OnboardingWizard({ isDismissible = false, onClose }: OnboardingW
 
           {/* STEP 3: Systems */}
           {step === 3 && (
-            <div className="space-y-5 animate-in fade-in duration-200">
-              <div className="space-y-1">
-                <h3 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Cpu className="h-4 w-4 text-indigo-500" />
-                  Step 3: Systems &amp; Infrastructure
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Rate your core systems architectures and hosting capabilities.
-                </p>
-              </div>
-
+            <div className="space-y-4 animate-in fade-in duration-200">
               {isSkillsMasterLoading ? (
-                <div className="h-32 animate-pulse bg-muted/20 border border-border/40 rounded-xl" />
+                <div className="h-32 animate-pulse bg-white/5 border border-white/10" />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {systemGroup.map((skill) => (
-                    <div key={skill.skill_set_name} className="p-3.5 rounded-xl bg-muted/20 border border-border/40 space-y-2.5">
+                    <div key={skill.skill_set_name} className="onboarding-skill-card space-y-2">
                       <div className="flex justify-between items-start">
-                        <div className="min-w-0">
-                          <span className="text-xs font-bold text-foreground block truncate">
+                        <div className="min-w-0 pr-2">
+                          <span className="onboarding-mono text-xs font-bold text-white block truncate uppercase tracking-wider">
                             {skill.skill_set_name}
                           </span>
-                          <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
+                          <span className="onboarding-mono text-[9px] opacity-40 block truncate mt-0.5 uppercase tracking-wide">
                             {getSkillDesc(skill.skill_set_name)}
                           </span>
                         </div>
-                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-1.5 py-0.5 dark:bg-indigo-950/20 dark:border-indigo-900/50 shrink-0">
-                          Lvl {skills[skill.skill_set_name] ?? 5}
+                        <span className="onboarding-mono text-[9px] font-bold text-white border border-white/20 px-1.5 py-0.5 shrink-0">
+                          LVL {skills[skill.skill_set_name] ?? 5}
                         </span>
                       </div>
                       <Slider
@@ -444,34 +575,24 @@ export function OnboardingWizard({ isDismissible = false, onClose }: OnboardingW
 
           {/* STEP 4: Soft skills */}
           {step === 4 && (
-            <div className="space-y-5 animate-in fade-in duration-200">
-              <div className="space-y-1">
-                <h3 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Award className="h-4 w-4 text-purple-500" />
-                  Step 4: Engineering Tools &amp; Soft Skills
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Rate your familiarity with developer tools and professional interaction.
-                </p>
-              </div>
-
+            <div className="space-y-4 animate-in fade-in duration-200">
               {isSkillsMasterLoading ? (
-                <div className="h-32 animate-pulse bg-muted/20 border border-border/40 rounded-xl" />
+                <div className="h-32 animate-pulse bg-white/5 border border-white/10" />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {softGroup.map((skill) => (
-                    <div key={skill.skill_set_name} className="p-3.5 rounded-xl bg-muted/20 border border-border/40 space-y-2.5">
+                    <div key={skill.skill_set_name} className="onboarding-skill-card space-y-2">
                       <div className="flex justify-between items-start">
-                        <div className="min-w-0">
-                          <span className="text-xs font-bold text-foreground block truncate">
+                        <div className="min-w-0 pr-2">
+                          <span className="onboarding-mono text-xs font-bold text-white block truncate uppercase tracking-wider">
                             {skill.skill_set_name}
                           </span>
-                          <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
+                          <span className="onboarding-mono text-[9px] opacity-40 block truncate mt-0.5 uppercase tracking-wide">
                             {getSkillDesc(skill.skill_set_name)}
                           </span>
                         </div>
-                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-1.5 py-0.5 dark:bg-indigo-950/20 dark:border-indigo-900/50 shrink-0">
-                          Lvl {skills[skill.skill_set_name] ?? 5}
+                        <span className="onboarding-mono text-[9px] font-bold text-white border border-white/20 px-1.5 py-0.5 shrink-0">
+                          LVL {skills[skill.skill_set_name] ?? 5}
                         </span>
                       </div>
                       <Slider
@@ -489,48 +610,39 @@ export function OnboardingWizard({ isDismissible = false, onClose }: OnboardingW
             </div>
           )}
 
-        </CardContent>
+        </div>
 
-        <CardFooter className="flex justify-between items-center border-t border-border pt-4 bg-muted/10">
+        {/* Footer actions */}
+        <div className="flex justify-between items-center border-t border-white/10 pt-6 mt-4">
           {step > 1 ? (
-            <Button
-              variant="outline"
+            <button
               onClick={handlePrev}
-              className="text-xs font-semibold h-9 px-4 gap-1.5"
+              className="onboarding-btn-outline gap-1.5 cursor-pointer animate-in fade-in"
             >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back
-            </Button>
+              <ArrowLeft className="h-3.5 w-3.5" /> BACK
+            </button>
           ) : (
             <div />
           )}
 
           {step < 4 ? (
-            <Button
+            <button
               onClick={handleNext}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-9 px-4 gap-1.5 transition-colors shadow-sm ml-auto"
+              className="onboarding-btn gap-1.5 cursor-pointer ml-auto"
             >
-              Next Steps <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
+              NEXT STEPS <ArrowRight className="h-3.5 w-3.5" />
+            </button>
           ) : (
-            <Button
+            <button
               onClick={handleSubmit}
               disabled={updateMutation.isPending}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-semibold h-9 px-5 gap-1.5 transition-all shadow-md ml-auto"
+              className="onboarding-btn gap-1.5 cursor-pointer ml-auto"
             >
-              {updateMutation.isPending ? (
-                <>
-                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Saving config...
-                </>
-              ) : (
-                <>
-                  Save &amp; Complete <Check className="h-3.5 w-3.5" />
-                </>
-              )}
-            </Button>
+              {updateMutation.isPending ? "SAVING..." : "SAVE & COMPLETE"}
+            </button>
           )}
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
